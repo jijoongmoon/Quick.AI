@@ -51,6 +51,8 @@ quick_dot_ai_inc = []
 
 subdir('models')
 
+ext_inc = include_directories('models/llm-qnn-test')
+
 # ── Build model plugin (.so for LD_PRELOAD mode) ──────────────────────
 quick_dot_ai_plugin = shared_library('quick_dot_ai',
     quick_dot_ai_src,

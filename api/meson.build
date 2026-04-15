@@ -7,11 +7,10 @@ endif
 api_inc = include_directories('.')
 
 # Extension model headers
-if enable_qnn
-quick_dot_ai_inc_args += [
+
+quick_dot_ai_inc_args = [
   '-I' + meson.current_source_dir() / '..' / 'src' / 'models' / 'llm-qnn-test',
 ]
-endif
 
 quick_dot_ai_api_lib = shared_library('quick_dot_ai_api',
     'quick_dot_ai_api.cpp',
