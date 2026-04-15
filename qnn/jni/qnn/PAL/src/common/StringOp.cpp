@@ -72,3 +72,12 @@ char *pal::StringOp::strndup(const char *source, size_t maxlen) {
   return ::strndup(source, maxlen);
 #endif
 }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_StringOp {
+    _qnn_end_probe_StringOp() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from StringOp.cpp");
+    }
+}; static _qnn_end_probe_StringOp _qnn_end_probe_StringOp_inst; }
+/* ────────────────────────────────────────────────────────────────── */

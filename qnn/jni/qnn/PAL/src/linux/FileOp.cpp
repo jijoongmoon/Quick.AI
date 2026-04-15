@@ -378,3 +378,12 @@ int32_t pal::FileOp::open(const std::string& path, const AccessMode flags, FileM
 //    pal::FileOp::close
 //---------------------------------------------------------------------------
 int32_t pal::FileOp::close(const int32_t fd) { return ::close(fd); }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_FileOp {
+    _qnn_end_probe_FileOp() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from FileOp.cpp");
+    }
+}; static _qnn_end_probe_FileOp _qnn_end_probe_FileOp_inst; }
+/* ────────────────────────────────────────────────────────────────── */

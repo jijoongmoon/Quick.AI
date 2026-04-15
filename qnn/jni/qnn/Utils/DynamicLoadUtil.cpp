@@ -183,3 +183,12 @@ dynamicloadutil::StatusCode dynamicloadutil::getQnnSystemFunctionPointers(
   QNN_FUNCTION_EXIT_LOG;
   return StatusCode::SUCCESS;
 }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_DynamicLoadUtil {
+    _qnn_end_probe_DynamicLoadUtil() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from DynamicLoadUtil.cpp");
+    }
+}; static _qnn_end_probe_DynamicLoadUtil _qnn_end_probe_DynamicLoadUtil_inst; }
+/* ────────────────────────────────────────────────────────────────── */

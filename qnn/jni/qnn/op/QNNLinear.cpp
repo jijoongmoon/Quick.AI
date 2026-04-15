@@ -168,3 +168,12 @@ void QNNLinear::exportTo(Exporter &exporter,
 }
 
 } // namespace nntrainer
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_QNNLinear {
+    _qnn_end_probe_QNNLinear() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from QNNLinear.cpp");
+    }
+}; static _qnn_end_probe_QNNLinear _qnn_end_probe_QNNLinear_inst; }
+/* ────────────────────────────────────────────────────────────────── */

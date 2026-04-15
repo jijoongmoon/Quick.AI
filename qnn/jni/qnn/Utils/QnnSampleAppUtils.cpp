@@ -464,3 +464,12 @@ unsigned int sample_app::parseUintArg(std::string numString) {
   numStream >> num;
   return num;
 }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_QnnSampleAppUtils {
+    _qnn_end_probe_QnnSampleAppUtils() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from QnnSampleAppUtils.cpp");
+    }
+}; static _qnn_end_probe_QnnSampleAppUtils _qnn_end_probe_QnnSampleAppUtils_inst; }
+/* ────────────────────────────────────────────────────────────────── */

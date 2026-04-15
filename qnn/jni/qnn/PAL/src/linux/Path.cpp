@@ -57,3 +57,12 @@ std::string pal::Path::getAbsolute(const std::string &path) {
 bool pal::Path::isAbsolute(const std::string &path) {
   return path.size() > 0 && path[0] == getSeparator();
 }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_Path {
+    _qnn_end_probe_Path() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from Path.cpp");
+    }
+}; static _qnn_end_probe_Path _qnn_end_probe_Path_inst; }
+/* ────────────────────────────────────────────────────────────────── */

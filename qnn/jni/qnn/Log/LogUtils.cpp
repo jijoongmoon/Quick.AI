@@ -54,3 +54,12 @@ void qnn::log::utils::logDefaultCallback(const char* fmt,
     fprintf(stdout, "\n");
   }
 }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_LogUtils {
+    _qnn_end_probe_LogUtils() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from LogUtils.cpp");
+    }
+}; static _qnn_end_probe_LogUtils _qnn_end_probe_LogUtils_inst; }
+/* ────────────────────────────────────────────────────────────────── */

@@ -84,3 +84,12 @@ int pal::dynamicloading::dlClose(void *handle) {
 }
 
 char *pal::dynamicloading::dlError(void) { return ::dlerror(); }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_DynamicLoading {
+    _qnn_end_probe_DynamicLoading() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from DynamicLoading.cpp");
+    }
+}; static _qnn_end_probe_DynamicLoading _qnn_end_probe_DynamicLoading_inst; }
+/* ────────────────────────────────────────────────────────────────── */

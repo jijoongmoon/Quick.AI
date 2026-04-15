@@ -427,3 +427,12 @@ void QNNGraph::populateTensor(std::shared_ptr<QNNVar> qc_var,
 }
 
 } // namespace nntrainer
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_QNNGraph {
+    _qnn_end_probe_QNNGraph() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from QNNGraph.cpp");
+    }
+}; static _qnn_end_probe_QNNGraph _qnn_end_probe_QNNGraph_inst; }
+/* ────────────────────────────────────────────────────────────────── */

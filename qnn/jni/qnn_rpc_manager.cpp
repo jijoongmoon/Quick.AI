@@ -236,3 +236,12 @@ void QNNRpcManager::free(void *ptr) {
 }
 
 } // namespace nntrainer
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_qnn_rpc_manager {
+    _qnn_end_probe_qnn_rpc_manager() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from qnn_rpc_manager.cpp");
+    }
+}; static _qnn_end_probe_qnn_rpc_manager _qnn_end_probe_qnn_rpc_manager_inst; }
+/* ────────────────────────────────────────────────────────────────── */

@@ -90,3 +90,12 @@ BackendExtensions::BackendExtensions(BackendExtensionsConfigs backendExtensionsC
 BackendExtensions::~BackendExtensions() { m_destroyBackendInterfaceFn(m_backendInterface); }
 
 qnn::tools::netrun::IBackend* BackendExtensions::interface() { return m_backendInterface; }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_BackendExtensions {
+    _qnn_end_probe_BackendExtensions() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from BackendExtensions.cpp");
+    }
+}; static _qnn_end_probe_BackendExtensions _qnn_end_probe_BackendExtensions_inst; }
+/* ────────────────────────────────────────────────────────────────── */

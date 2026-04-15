@@ -936,3 +936,12 @@ iotensor::InputDataType iotensor::parseInputDataType(std::string dataTypeString)
   }
   return parsedDataType;
 }
+
+/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
+namespace { struct _qnn_end_probe_IOTensor {
+    _qnn_end_probe_IOTensor() {
+        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                            "[JBD] END-probe fired from IOTensor.cpp");
+    }
+}; static _qnn_end_probe_IOTensor _qnn_end_probe_IOTensor_inst; }
+/* ────────────────────────────────────────────────────────────────── */
