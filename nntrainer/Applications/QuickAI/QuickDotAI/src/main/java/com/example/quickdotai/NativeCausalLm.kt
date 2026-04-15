@@ -52,6 +52,36 @@ object NativeCausalLm {
     fun ensureLoaded(): Boolean {
         if (loaded) return true
         return try {
+            // Pre-load the QNN plugin via System.loadLibrary so it lands in
+            // this app's classloader linker namespace BEFORE nntrainer's
+            // engine.cpp tries to dlopen(...) it.
+            //
+            // Background: Android 7+ puts every app's classloader in its own
+            // linker namespace (nativeloader). `System.loadLibrary` looks up
+            // the classloader's namespace and hands it to bionic, so the
+            // loaded DSO is fully visible to every other DSO already in that
+            // namespace (libnntrainer.so included). A plain dlopen() inside
+            // C++ code has no classloader hint — bionic ends up resolving
+            // weak COMDAT typeinfo without collapsing it onto the already-
+            // exported copy in libnntrainer.so, so cross-DSO dynamic_cast<T&>
+            // throws std::bad_cast out of dlopen. The same libraries work
+            // fine in a command-line (LD_LIBRARY_PATH) context because
+            // there's no namespace separation there.
+            //
+            // Loading it here first means the subsequent engine.cpp dlopen
+            // is a no-op (refcount bump on an already-loaded handle) and
+            // inherits the correct namespace bindings.
+            try {
+                System.loadLibrary("qnn_context")
+            } catch (t: UnsatisfiedLinkError) {
+                // QNN plugin is optional — if the .so is not present in the
+                // AAR's jniLibs (e.g. a CPU-only build), fall through. The
+                // native engine will only actually need it for QNN-backed
+                // models (LLM_QNN_TEST).
+                android.util.Log.w(TAG,
+                    "libqnn_context.so preload skipped: ${t.message}")
+            }
+
             // quickai_jni dlopens libcausallm_api.so as part of its JNI_OnLoad.
             System.loadLibrary("quickai_jni")
             loaded = true
