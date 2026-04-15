@@ -63,6 +63,16 @@ __attribute__((constructor(101))) static void
   LOGD("[JBD] qnn_context.so static init ENTRY (priority 101)");
 }
 
+__attribute__((constructor(1000)))  static void _qnn_probe_p01000() { LOGD("[JBD] qnn_context probe p01000"); }
+__attribute__((constructor(5000)))  static void _qnn_probe_p05000() { LOGD("[JBD] qnn_context probe p05000"); }
+__attribute__((constructor(10000))) static void _qnn_probe_p10000() { LOGD("[JBD] qnn_context probe p10000"); }
+__attribute__((constructor(30000))) static void _qnn_probe_p30000() { LOGD("[JBD] qnn_context probe p30000"); }
+__attribute__((constructor(50000))) static void _qnn_probe_p50000() { LOGD("[JBD] qnn_context probe p50000"); }
+__attribute__((constructor(60000))) static void _qnn_probe_p60000() { LOGD("[JBD] qnn_context probe p60000"); }
+__attribute__((constructor(64000))) static void _qnn_probe_p64000() { LOGD("[JBD] qnn_context probe p64000"); }
+__attribute__((constructor(65000))) static void _qnn_probe_p65000() { LOGD("[JBD] qnn_context probe p65000"); }
+__attribute__((constructor(65500))) static void _qnn_probe_p65500() { LOGD("[JBD] qnn_context probe p65500"); }
+
 __attribute__((constructor(65535))) static void
   _qnn_context_static_init_exit() {
   LOGD("[JBD] qnn_context.so static init EXIT  (priority 65535)");
