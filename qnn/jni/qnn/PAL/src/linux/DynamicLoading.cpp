@@ -12,6 +12,17 @@
 #include "PAL/Debug.hpp"
 #include "PAL/DynamicLoading.hpp"
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(730))) static void _qnn_probe_DynamicLoading() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] DynamicLoading ctor fired (priority 730)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 void *pal::dynamicloading::dlOpen(const char *filename, int flags) {
   int realFlags = 0;
 

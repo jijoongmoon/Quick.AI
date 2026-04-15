@@ -8,6 +8,17 @@
 
 #include "LogUtils.hpp"
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(210))) static void _qnn_probe_LogUtils() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] LogUtils ctor fired (priority 210)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 void qnn::log::utils::logDefaultCallback(const char* fmt,
                                          QnnLog_Level_t level,
                                          uint64_t timestamp,

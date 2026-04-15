@@ -29,7 +29,19 @@
 
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(720))) static void _qnn_probe_Directory() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] Directory ctor fired (priority 720)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 #ifdef __QNXNTO__
+
 static bool is_qnx_dir(const struct dirent *ep) {
   struct dirent_extra *exp;
   bool is_dir = false;

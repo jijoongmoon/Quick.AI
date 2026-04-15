@@ -24,6 +24,17 @@
 #include "QnnSampleAppUtils.hpp"
 #include "QnnTypeMacros.hpp"
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(330))) static void _qnn_probe_QnnSampleAppUtils() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] QnnSampleAppUtils ctor fired (priority 330)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 using namespace qnn;
 using namespace qnn::tools;
 

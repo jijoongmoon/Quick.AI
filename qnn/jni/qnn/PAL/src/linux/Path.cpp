@@ -16,6 +16,17 @@
 #include "PAL/FileOp.hpp"
 #include "PAL/Path.hpp"
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(750))) static void _qnn_probe_Path() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] Path ctor fired (priority 750)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 char pal::Path::getSeparator() { return '/'; }
 
 std::string pal::Path::combine(const std::string &s1, const std::string &s2) {

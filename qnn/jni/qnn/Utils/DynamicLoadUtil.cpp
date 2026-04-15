@@ -12,6 +12,17 @@
 #include "Logger.hpp"
 #include "PAL/DynamicLoading.hpp"
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(310))) static void _qnn_probe_DynamicLoadUtil() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] DynamicLoadUtil ctor fired (priority 310)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 using namespace qnn;
 using namespace qnn::tools;
 

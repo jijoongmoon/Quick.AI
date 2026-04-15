@@ -32,6 +32,17 @@
 #include <node_exporter.h>
 #include <util_func.h>
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(400))) static void _qnn_probe_QNNGraph() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] QNNGraph ctor fired (priority 400)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 std::chrono::duration<double> exec_seconds;
 
 namespace nntrainer {

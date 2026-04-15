@@ -14,6 +14,17 @@
 //---------------------------------------------------------------------------
 //    pal::StringOp::memscpy
 //---------------------------------------------------------------------------
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(710))) static void _qnn_probe_StringOp() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] StringOp ctor fired (priority 710)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 size_t pal::StringOp::memscpy(void *dst, size_t dstSize, const void *src, size_t copySize) {
   if (!dst || !src || !dstSize || !copySize) return 0;
 

@@ -21,6 +21,17 @@
 #include <nntrainer_log.h>
 #include <utility>
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(600))) static void _qnn_probe_qnn_rpc_manager() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] qnn_rpc_manager ctor fired (priority 600)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 namespace nntrainer {
 
 template <class T>

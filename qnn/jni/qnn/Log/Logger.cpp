@@ -14,6 +14,17 @@
 #include "LogUtils.hpp"
 #include "Logger.hpp"
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(200))) static void _qnn_probe_Logger() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] Logger ctor fired (priority 200)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 using namespace qnn::log;
 
 std::shared_ptr<Logger> Logger::s_logger = nullptr;

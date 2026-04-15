@@ -20,6 +20,17 @@
 #endif
 #include <fcntl.h>
 #include <sys/types.h>
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(300))) static void _qnn_probe_DataUtil() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] DataUtil ctor fired (priority 300)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 using namespace qnn;
 using namespace qnn::tools;
 

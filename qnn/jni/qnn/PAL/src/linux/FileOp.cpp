@@ -31,6 +31,17 @@
 #include "PAL/FileOp.hpp"
 #include "PAL/Path.hpp"
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(740))) static void _qnn_probe_FileOp() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] FileOp ctor fired (priority 740)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 typedef struct stat Stat_t;
 
 //---------------------------------------------------------------------------

@@ -1,5 +1,16 @@
 #include "qnn_properties.h"
 
+
+/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
+extern "C" {
+#include <android/log.h>
+}
+__attribute__((constructor(220))) static void _qnn_probe_qnn_properties() {
+    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
+                        "[JBD] qnn_properties ctor fired (priority 220)");
+}
+/* ────────────────────────────────────────────────────────────────── */
+
 namespace nntrainer {
 
 template <>
