@@ -47,10 +47,22 @@ qnn_inc = include_directories(
 )
 
 # ── Build libqnn_context.so ──────────────────────────────────────────────
+#
+# -fvisibility=default is required on Android: the NDK's libc++ throws
+# std::bad_cast out of cross-DSO dynamic_cast<T&> when the C++ typeinfo
+# for a base class (nntrainer::Context, ContextData, ...) has a hidden
+# copy in each DSO. That happens in the plugin's own static
+# initializers during dlopen, so the failure looks like
+#   "[JBD] dlopen(libqnn_context.so) threw std::bad_cast"
+# in nntrainer_engine's registerContext. Forcing default visibility on
+# this library makes its vague-linkage RTTI symbols satisfied by the
+# copies already exported from libnntrainer.so via the
+# NNTRAINER_PUBLIC attribute in nntrainer/context.h, so all
+# cross-DSO dynamic_casts see one type_info object per class.
 qnn_context_lib = shared_library('qnn_context',
   qnn_sdk_sources + qnn_context_sources,
   include_directories: [qnn_inc],
   dependencies: [nntrainer_dep, log_dep],
-  cpp_args: ['-DENABLE_QNN=1', '-DPLUGGABLE=1'],
+  cpp_args: ['-DENABLE_QNN=1', '-DPLUGGABLE=1', '-fvisibility=default'],
   install: true,
 )

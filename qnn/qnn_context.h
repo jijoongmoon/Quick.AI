@@ -52,7 +52,8 @@ extern std::mutex qnn_factory_mutex;
  * @brief QNN support for app context
  */
 
-class QNNContext : public Context, public Singleton<QNNContext> {
+class __attribute__((visibility("default"))) QNNContext
+  : public Context, public Singleton<QNNContext> {
 
 public:
   /**
