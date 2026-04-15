@@ -48,21 +48,28 @@ qnn_inc = include_directories(
 
 # ── Build libqnn_context.so ──────────────────────────────────────────────
 #
-# -fvisibility=default is required on Android: the NDK's libc++ throws
-# std::bad_cast out of cross-DSO dynamic_cast<T&> when the C++ typeinfo
-# for a base class (nntrainer::Context, ContextData, ...) has a hidden
-# copy in each DSO. That happens in the plugin's own static
-# initializers during dlopen, so the failure looks like
-#   "[JBD] dlopen(libqnn_context.so) threw std::bad_cast"
-# in nntrainer_engine's registerContext. Forcing default visibility on
-# this library makes its vague-linkage RTTI symbols satisfied by the
-# copies already exported from libnntrainer.so via the
-# NNTRAINER_PUBLIC attribute in nntrainer/context.h, so all
-# cross-DSO dynamic_casts see one type_info object per class.
+# -fvisibility=default: vague-linkage typeinfo symbols (for
+# nntrainer::Context et al.) need to share one copy between
+# libnntrainer.so and libqnn_context.so, otherwise libc++'s
+# dynamic_cast<T&> throws std::bad_cast at dlopen time during the
+# plugin's static initializers.
+#
+# -fno-rtti: disables RTTI emission for this library and makes every
+# dynamic_cast / typeid inside it a compile error. The sources we
+# actually compile here (Qualcomm's netrun / sample_app / PAL helpers
+# plus our own QNNContext / QNNGraph / QNNLinear wrappers) do not use
+# dynamic_cast on anything polymorphic, so -fno-rtti succeeds — and
+# once it succeeds no std::bad_cast can come out of this .so's static
+# initializers. Pair this with -fvisibility=default so the plugin
+# still satisfies the weak vtable / typeinfo references that are
+# required by virtual function dispatch *against* libnntrainer.so's
+# classes.
 qnn_context_lib = shared_library('qnn_context',
   qnn_sdk_sources + qnn_context_sources,
   include_directories: [qnn_inc],
   dependencies: [nntrainer_dep, log_dep],
-  cpp_args: ['-DENABLE_QNN=1', '-DPLUGGABLE=1', '-fvisibility=default'],
+  cpp_args: ['-DENABLE_QNN=1', '-DPLUGGABLE=1',
+             '-fvisibility=default',
+             '-fno-rtti'],
   install: true,
 )
