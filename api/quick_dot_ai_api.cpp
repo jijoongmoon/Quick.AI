@@ -670,10 +670,27 @@ static ErrorCode load_into_handle(CausalLmModel &h, BackendType compute,
     LOGD("[DEBUG] load_into_handle: SUCCESS (init took %ld ms)", h.initialization_duration_ms);
 
   } catch (const std::exception &e) {
-    LOGE("[DEBUG] load_into_handle: Exception: %s", e.what());
+    LOGE("[DEBUG] load_into_handle: Exception (%s): %s",
+         typeid(e).name(), e.what());
     return CAUSAL_LM_ERROR_MODEL_LOAD_FAILED;
   } catch (...) {
-    LOGE("[DEBUG] load_into_handle: Unknown exception");
+    // Surface the dynamic type of the in-flight exception so a
+    // thrown-but-non-std-derived object (int, custom class, QNN
+    // SDK error struct, …) doesn't come out as an opaque
+    // "Unknown exception". current_exception + rethrow lets
+    // typeid(*e) inspect the concrete type.
+    const char *tname = "<no current exception>";
+    std::exception_ptr cur = std::current_exception();
+    if (cur) {
+      try {
+        std::rethrow_exception(cur);
+      } catch (const std::exception &e2) {
+        tname = typeid(e2).name();
+      } catch (...) {
+        tname = "<non-std::exception type>";
+      }
+    }
+    LOGE("[DEBUG] load_into_handle: Unknown exception, typeid=%s", tname);
     return CAUSAL_LM_ERROR_MODEL_LOAD_FAILED;
   }
 
