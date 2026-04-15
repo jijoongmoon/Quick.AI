@@ -176,7 +176,20 @@ public:
   createLayerObject(const std::string &type,
                     const std::vector<std::string> &properties = {}) const {
     auto ct = getRegisteredContext(parseComputeEngine(properties));
-    return ct->createLayerObject(type);
+    // Same-DSO re-wrap: on Android app classloader namespaces the
+    // plugin context's private typeinfo can fail to match the caller
+    // DSO's std::exception typeinfo, making a legitimate throw look
+    // like a catch(...) "Unknown exception". Rewrap here as a
+    // std::runtime_error whose typeinfo is shared via libc++_shared.so.
+    try {
+      return ct->createLayerObject(type);
+    } catch (const std::exception &e) {
+      throw std::runtime_error(std::string("Engine::createLayerObject(") +
+                               type + ") failed: " + e.what());
+    } catch (...) {
+      throw std::runtime_error(std::string("Engine::createLayerObject(") +
+                               type + ") failed with a non-std exception");
+    }
   }
 
   /**
@@ -190,7 +203,17 @@ public:
   createLayerObject(const int int_key,
                     const std::vector<std::string> &properties = {}) const {
     auto ct = getRegisteredContext(parseComputeEngine(properties));
-    return ct->createLayerObject(int_key);
+    try {
+      return ct->createLayerObject(int_key);
+    } catch (const std::exception &e) {
+      throw std::runtime_error(std::string("Engine::createLayerObject(int_key=") +
+                               std::to_string(int_key) + ") failed: " +
+                               e.what());
+    } catch (...) {
+      throw std::runtime_error(std::string("Engine::createLayerObject(int_key=") +
+                               std::to_string(int_key) +
+                               ") failed with a non-std exception");
+    }
   }
 
   /**
