@@ -211,10 +211,23 @@ int Engine::registerContext(const std::string &library_path,
   // the log makes the precise failure source obvious, then rethrow
   // so the caller's NNTR_THROW_IF sees the real error instead of a
   // bogus "load succeeded / handle == nullptr" race.
+  //
+  // RTLD_GLOBAL (instead of the historical RTLD_LOCAL) is required on
+  // Android: the plugin contains its own weak copies of every
+  // vague-linkage typeinfo it references — including the nntrainer
+  // polymorphic base classes it inherits from. Under RTLD_LOCAL those
+  // local copies win during the plugin's own relocation pass, so
+  // cross-DSO dynamic_cast<T&> ends up comparing two distinct
+  // type_info objects (one in libnntrainer.so, one private to
+  // libqnn_context.so) and throws std::bad_cast out of libc++.
+  // RTLD_GLOBAL keeps the plugin's symbol scope merged with the
+  // already-loaded libnntrainer.so symbols, so the typeinfo
+  // references collapse onto a single exported definition and the
+  // dynamic_cast path succeeds.
   void *handle = nullptr;
   try {
     handle = DynamicLibraryLoader::loadLibrary(full_path.c_str(),
-                                               RTLD_LAZY | RTLD_LOCAL);
+                                               RTLD_LAZY | RTLD_GLOBAL);
   } catch (const std::bad_cast &e) {
     LOGE("[JBD] dlopen(%s) threw std::bad_cast — cross-DSO RTTI "
          "mismatch during the plugin's static initializers: %s",
