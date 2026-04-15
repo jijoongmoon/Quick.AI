@@ -26,6 +26,21 @@ if get_option('platform') == 'android'
 endif
 
 flags += '-O@0@'.format(get_option('optimization'))
+
+# Force default visibility on Android so vague-linkage RTTI / vtable
+# symbols (e.g. typeinfo for nntrainer::Context, Layer, LayerImpl,
+# Property<T>…) are EXPORTED from libnntrainer.so. Without this, a
+# plugin DSO that is built with -fvisibility=default (such as
+# libqnn_context.so) would still end up with its own hidden copies of
+# those typeinfo objects because libnntrainer.so never exported them,
+# and libc++'s RTTI path throws std::bad_cast the first time any
+# cross-DSO dynamic_cast<T&> or typeid(*ptr) is evaluated — on
+# Android this happens while dlopen is still running the plugin's
+# static initialisers, so it surfaces as a bad_cast escaping dlopen.
+if get_option('platform') == 'android'
+  flags += '-fvisibility=default'
+endif
+
 message('compile flags are:' + ' '.join(flags))
 
 flags = extra_defines + flags
