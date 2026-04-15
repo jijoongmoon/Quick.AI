@@ -1,0 +1,315 @@
+// SPDX-License-Identifier: Apache-2.0
+/**
+ * Copyright (C) 2024 Jijoong Moon <jijoong.moon@samsung.com>
+ *
+ * @file   engine.cpp
+ * @date   27 December 2024
+ * @brief  This file contains engine context related functions and classes that
+ * manages the engines (NPU, GPU, CPU) of the current environment
+ * @see    https://github.com/nntrainer/nntrainer
+ * @author Jijoong Moon <jijoong.moon@samsung.com>
+ * @bug    No known bugs except for NYI items
+ *
+ */
+#include <filesystem>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <vector>
+
+#include <app_context.h>
+#include <base_properties.h>
+#include <context.h>
+#include <dynamic_library_loader.h>
+#include <engine.h>
+#include <android/log.h>
+
+#define LOG_TAG "nntrainer_engine"
+
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
+static std::string solib_suffix = ".so";
+static std::string contextlib_suffix = "context.so";
+static const std::string func_tag = "[Engine] ";
+
+namespace nntrainer {
+
+std::mutex engine_mutex;
+
+std::once_flag global_engine_init_flag;
+
+nntrainer::Context
+  *Engine::nntrainerRegisteredContext[Engine::RegisterContextMax];
+
+void Engine::add_default_object() {
+  /// @note all layers should be added to the app_context to guarantee that
+  /// createLayer/createOptimizer class is created
+
+  auto &app_context = nntrainer::AppContext::Global();
+
+  init_backend(); // initialize cpu backend
+  registerContext("cpu", &app_context);
+
+#if defined(ENABLE_OPENCL) && ENABLE_OPENCL == 1
+  auto &cl_context = nntrainer::ClContext::Global();
+
+  registerContext("gpu", &cl_context);
+#endif
+}
+
+void Engine::initialize() noexcept {
+  try {
+    add_default_object();
+  } catch (std::exception &e) {
+    ml_loge("registering layers failed!!, reason: %s", e.what());
+  } catch (...) {
+    ml_loge("registering layer failed due to unknown reason");
+  }
+};
+
+void Engine::release() {
+  // Guard against double-release (could be called from both atexit and
+  // destructor)
+  if (engines.empty()) {
+    return;
+  }
+
+  // Clean up dynamically allocated contexts (those loaded from plugins)
+  // Note: Static contexts like AppContext::Global() are not deleted here
+  // as they are managed elsewhere
+
+  // Delete all dynamic contexts using their destroy functions
+  // Using destroyfunc ensures proper cleanup as defined by the plugin
+  for (auto &pair : engines) {
+    // Check if this is a dynamically allocated context
+    // by checking if it was loaded from a plugin library
+    bool is_dynamic = true;
+    if (pair.first == "cpu") {
+      is_dynamic = false; // AppContext is a static singleton
+    }
+#if defined(ENABLE_OPENCL) && ENABLE_OPENCL == 1
+    if (pair.first == "gpu") {
+      is_dynamic = false; // ClContext is a static singleton
+    }
+#endif
+    if (is_dynamic && pair.second) {
+      // Use destroyfunc if available, otherwise fall back to delete
+      auto it = destroy_funcs.find(pair.first);
+      if (it != destroy_funcs.end() && it->second) {
+        it->second(pair.second);
+      } else {
+        delete pair.second;
+      }
+    }
+  }
+  engines.clear();
+  allocator.clear();
+  destroy_funcs.clear();
+
+  // Do NOT close library handles - QNNContext destructor already handles
+  // its own library cleanup (dlClose on m_backendLibraryHandle)
+  // Closing library handles here would cause a double-free segfault
+  library_handles.clear();
+
+  thread_pool_manager_.reset();
+}
+
+std::string
+Engine::parseComputeEngine(const std::vector<std::string> &props) const {
+  for (auto &prop : props) {
+    std::string key, value;
+    int status = nntrainer::getKeyValue(prop, key, value);
+    if (nntrainer::istrequal(key, "engine")) {
+      constexpr const auto data =
+        std::data(props::ComputeEngineTypeInfo::EnumList);
+      for (unsigned int i = 0;
+           i < props::ComputeEngineTypeInfo::EnumList.size(); ++i) {
+        if (nntrainer::istrequal(value.c_str(),
+                                 props::ComputeEngineTypeInfo::EnumStr[i])) {
+          return props::ComputeEngineTypeInfo::EnumStr[i];
+        }
+      }
+    }
+  }
+
+  return "cpu";
+}
+/**
+ * @brief Get the Full Path from given string
+ * @details path is resolved in the following order
+ * 1) if @a path is absolute, return path
+ * ----------------------------------------
+ * 2) if @a base == "" && @a path == "", return "."
+ * 3) if @a base == "" && @a path != "", return @a path
+ * 4) if @a base != "" && @a path == "", return @a base
+ * 5) if @a base != "" && @a path != "", return @a base + "/" + path
+ *
+ * @param path path to calculate from base
+ * @param base base path
+ * @return const std::string
+ */
+const std::string getFullPath(const std::string &path,
+                              const std::string &base) {
+  /// if path is absolute, return path
+  if (path[0] == '/') {
+    return path;
+  }
+
+  if (base == std::string()) {
+    return path == std::string() ? "." : path;
+  }
+
+  return path == std::string() ? base : base + "/" + path;
+}
+
+const std::string Engine::getWorkingPath(const std::string &path) const {
+  return getFullPath(path, working_path_base);
+}
+
+void Engine::setWorkingDirectory(const std::string &base) {
+  std::filesystem::path base_path(base);
+
+  if (!std::filesystem::is_directory(base_path)) {
+    std::stringstream ss;
+    ss << func_tag << "path is not directory or has no permission: " << base;
+    throw std::invalid_argument(ss.str().c_str());
+  }
+
+  char *ret = getRealpath(base.c_str(), nullptr);
+
+  if (ret == nullptr) {
+    std::stringstream ss;
+    ss << func_tag << "failed to get canonical path for the path: ";
+    throw std::invalid_argument(ss.str().c_str());
+  }
+
+  working_path_base = std::string(ret);
+  ml_logd("working path base has set: %s", working_path_base.c_str());
+  free(ret);
+}
+
+int Engine::registerContext(const std::string &library_path,
+                            const std::string &base_path) {
+
+  LOGD("(JBD: test) %s:%d", __FILE__, __LINE__);
+
+  const std::string full_path = getFullPath(library_path, base_path);
+
+  LOGD("%s", full_path.c_str());
+
+  // Clear any stale dlerror() from a prior unrelated call so the
+  // getLastError() result below reflects only this dlopen attempt.
+  (void)DynamicLibraryLoader::getLastError();
+
+  // dlopen is extern "C" and cannot normally throw, but on Android
+  // the loaded DSO's C++ static initializers run inside dlopen — if
+  // any of those throw (e.g. std::bad_cast from a cross-DSO RTTI
+  // mismatch in the plugin's own ops) the exception propagates back
+  // through dlopen. Keep a named catch per well-known exception so
+  // the log makes the precise failure source obvious, then rethrow
+  // so the caller's NNTR_THROW_IF sees the real error instead of a
+  // bogus "load succeeded / handle == nullptr" race.
+  void *handle = nullptr;
+  try {
+    handle = DynamicLibraryLoader::loadLibrary(full_path.c_str(),
+                                               RTLD_LAZY | RTLD_LOCAL);
+  } catch (const std::bad_cast &e) {
+    LOGE("[JBD] dlopen(%s) threw std::bad_cast — cross-DSO RTTI "
+         "mismatch during the plugin's static initializers: %s",
+         full_path.c_str(), e.what());
+    throw;
+  } catch (const std::exception &e) {
+    LOGE("[JBD] dlopen(%s) threw %s: %s", full_path.c_str(),
+         typeid(e).name(), e.what());
+    throw;
+  }
+
+  LOGD("(JBD: test) %s:%d", __FILE__, __LINE__);
+
+  const char *error_msg = DynamicLibraryLoader::getLastError();
+
+  LOGD("error msg: %s", error_msg ? error_msg : "(null)");
+
+  NNTR_THROW_IF(handle == nullptr, std::invalid_argument)
+    << func_tag << "open plugin failed, path: " << full_path
+    << ", reason: " << (error_msg ? error_msg : "(null)");
+
+  LOGD("handle: %p", handle);
+
+  LOGD("%s:%d", __FILE__, __LINE__);
+
+  // Clear dlerror() again so the ml_train_context_pluggable lookup
+  // below can use error_msg == nullptr as the "symbol found" signal.
+  (void)DynamicLibraryLoader::getLastError();
+
+  nntrainer::ContextPluggable *pluggable =
+    reinterpret_cast<nntrainer::ContextPluggable *>(
+      DynamicLibraryLoader::loadSymbol(handle, "ml_train_context_pluggable"));
+
+  LOGD("%s:%d", __FILE__, __LINE__);
+
+  error_msg = DynamicLibraryLoader::getLastError();
+  auto close_dl = [handle] { DynamicLibraryLoader::freeLibrary(handle); };
+  NNTR_THROW_IF_CLEANUP(pluggable == nullptr,
+                        std::invalid_argument, close_dl)
+    << func_tag << "loading symbol ml_train_context_pluggable failed, reason: "
+    << (error_msg ? error_msg : "(null)");
+
+            LOGD("%s:%d", __FILE__, __LINE__);
+
+
+  nntrainer::Context *context = nullptr;
+  try {
+    context = pluggable->createfunc();
+  } catch (const std::bad_cast &e) {
+    LOGE("[JBD] pluggable->createfunc() threw std::bad_cast — the "
+         "plugin's create function triggered a cross-DSO dynamic_cast "
+         "on a type whose typeinfo is not shared between libnntrainer "
+         "and %s. Reason: %s",
+         full_path.c_str(), e.what());
+    DynamicLibraryLoader::freeLibrary(handle);
+    throw;
+  } catch (const std::exception &e) {
+    LOGE("[JBD] pluggable->createfunc() threw %s: %s",
+         typeid(e).name(), e.what());
+    DynamicLibraryLoader::freeLibrary(handle);
+    throw;
+  }
+
+          LOGD("%s:%d", __FILE__, __LINE__);
+
+  NNTR_THROW_IF_CLEANUP(context == nullptr, std::invalid_argument, close_dl)
+    << func_tag << "created pluggable context is null";
+  auto type = context->getName();
+
+          LOGD("%s:%d", __FILE__, __LINE__);
+
+  NNTR_THROW_IF_CLEANUP(type == "", std::invalid_argument, close_dl)
+    << func_tag << "custom layer must specify type name, but it is empty";
+
+  // Pass library handle and destroy function for proper cleanup
+  registerContext(type, context, handle, pluggable->destroyfunc);
+
+  // Register cleanup with atexit to ensure it runs before static destruction
+  // This ensures QNN contexts are cleaned up before the driver state becomes
+  // invalid. Using std::call_once for thread safety.
+  static std::once_flag atexit_flag;
+  std::call_once(atexit_flag,
+                 []() { std::atexit([]() { Engine::Global().release(); }); });
+
+  return 0;
+}
+
+ThreadPoolManager *Engine::getThreadPoolManager() {
+  std::lock_guard<std::mutex> lock(thread_pool_manager_mutex_);
+
+  if (!thread_pool_manager_) {
+    thread_pool_manager_ = std::make_unique<ThreadPoolManager>();
+  }
+
+  return thread_pool_manager_.get();
+}
+
+} // namespace nntrainer
