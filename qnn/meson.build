@@ -48,28 +48,20 @@ qnn_inc = include_directories(
 
 # ── Build libqnn_context.so ──────────────────────────────────────────────
 #
-# -fvisibility=default: vague-linkage typeinfo symbols (for
-# nntrainer::Context et al.) need to share one copy between
-# libnntrainer.so and libqnn_context.so, otherwise libc++'s
-# dynamic_cast<T&> throws std::bad_cast at dlopen time during the
-# plugin's static initializers.
+# -fvisibility=default: vague-linkage typeinfo and vtable symbols have
+# to be a single exported copy between libnntrainer.so and
+# libqnn_context.so, otherwise libc++ ends up comparing two hidden
+# type_info objects across the DSO boundary and throws std::bad_cast
+# out of dlopen while the plugin's static initialisers run.
 #
-# -fno-rtti: disables RTTI emission for this library and makes every
-# dynamic_cast / typeid inside it a compile error. The sources we
-# actually compile here (Qualcomm's netrun / sample_app / PAL helpers
-# plus our own QNNContext / QNNGraph / QNNLinear wrappers) do not use
-# dynamic_cast on anything polymorphic, so -fno-rtti succeeds — and
-# once it succeeds no std::bad_cast can come out of this .so's static
-# initializers. Pair this with -fvisibility=default so the plugin
-# still satisfies the weak vtable / typeinfo references that are
-# required by virtual function dispatch *against* libnntrainer.so's
-# classes.
+# (We tried -fno-rtti earlier but several nntrainer headers pulled in
+# through common_properties.h / node_exporter.h use `typeid(*t).name()`
+# in inline template bodies, so disabling RTTI breaks compilation.)
 qnn_context_lib = shared_library('qnn_context',
   qnn_sdk_sources + qnn_context_sources,
   include_directories: [qnn_inc],
   dependencies: [nntrainer_dep, log_dep],
   cpp_args: ['-DENABLE_QNN=1', '-DPLUGGABLE=1',
-             '-fvisibility=default',
-             '-fno-rtti'],
+             '-fvisibility=default'],
   install: true,
 )
