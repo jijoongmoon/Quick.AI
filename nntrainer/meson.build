@@ -47,6 +47,20 @@ nproc_prog = find_program('nproc',
 
 prog_win_cmd = find_program('cmd.exe', required: build_machine.system() == 'windows')
 
+if get_option('platform') == 'android'
+  # Android NDK clang defaults hidden visibility for vague-linkage
+  # symbols (typeinfo, vtables), so when a plugin DSO like
+  # libqnn_context.so does a cross-DSO dynamic_cast<T&> on a type
+  # whose base class is defined in libnntrainer.so, libc++'s RTTI
+  # compare mis-matches two hidden copies of the type_info object
+  # and throws std::bad_cast — and on Android that throw escapes
+  # out of dlopen itself while the plugin's static initializers run.
+  # Forcing default visibility on libnntrainer.so makes its typeinfo
+  # a single exported symbol that the plugin can link against.
+  add_project_arguments('-fvisibility=default',
+                        language: ['c','cpp'])
+endif
+
 if get_option('platform') == 'tizen'
   # Pass __TIZEN__ to the compiler
   add_project_arguments('-D__TIZEN__=1', language:['c','cpp'])
