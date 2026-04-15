@@ -70,7 +70,8 @@ nntrainer_common_sources = [
   'nntrainer_logger.cpp',
   'app_context.cpp',
   'engine.cpp',
-  'mem_allocator.cpp'
+  'mem_allocator.cpp',
+  'context.cpp',
 ]
 
 nntrainer_inc_abs += meson.source_root() / 'subprojects' / 'ruy'

@@ -3,6 +3,7 @@ nntrainer_inc += include_directories('loss')
 nntrainer_inc_abs += meson.current_source_dir() / 'loss'
 
 layer_sources = [
+  'layer_devel.cpp',
   'activation_layer.cpp',
   'weight_layer.cpp',
   'tensor_layer.cpp',

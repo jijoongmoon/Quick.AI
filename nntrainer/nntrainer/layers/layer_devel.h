@@ -165,8 +165,17 @@ public:
 
   /**
    * @brief     Destructor of Layer Class
+   *
+   * Intentionally declared out-of-line (defined in layer_devel.cpp) so
+   * that Layer has a key function. Without a key function the compiler
+   * emits Layer's typeinfo and vtable as weak COMDAT in every TU that
+   * includes this header, and Android's bionic linker does not always
+   * collapse those weak copies across DSOs — a plugin that inherits
+   * from Layer ends up carrying its own private type_info object, and
+   * libc++'s dynamic_cast<Layer &> from code living in libnntrainer.so
+   * then throws std::bad_cast out of the plugin's dlopen.
    */
-  virtual ~Layer() = default;
+  virtual ~Layer();
 
   /**
    * @brief Get the layer type
