@@ -21,15 +21,6 @@
 #include <fcntl.h>
 #include <sys/types.h>
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(300))) static void _qnn_probe_DataUtil() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] DataUtil ctor fired (priority 300)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 using namespace qnn;
 using namespace qnn::tools;
@@ -434,12 +425,3 @@ template datautil::StatusCode datautil::castFromFloat<int32_t>(int32_t* out,
 template datautil::StatusCode datautil::castFromFloat<int64_t>(int64_t* out,
                                                                float* in,
                                                                size_t numElements);
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_DataUtil {
-    _qnn_end_probe_DataUtil() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from DataUtil.cpp");
-    }
-}; static _qnn_end_probe_DataUtil _qnn_end_probe_DataUtil_inst; }
-/* ────────────────────────────────────────────────────────────────── */

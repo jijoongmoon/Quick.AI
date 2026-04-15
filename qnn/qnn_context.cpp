@@ -43,41 +43,6 @@ using namespace qnn;
 using namespace qnn::tools;
 using namespace qnn::tools::sample_app;
 
-/**
- * @brief static-init bracket loggers used to pin down which phase of
- * libqnn_context.so's dlopen-time ctors throws std::bad_cast.
- *
- * constructor(101) fires among the earliest user ctors (101 is the
- * smallest priority GCC/Clang allow on Android — 0..100 are reserved
- * for the C/C++ runtime). constructor(65535) fires in the last batch
- * alongside non-prioritised user ctors.
- *
- * If only (101) prints, the bad_cast originates in some other ctor
- * that runs between (101) and (65535) — i.e. from somewhere in this
- * library's regular static init, not from runtime-internal bring-up.
- * If neither prints, the exception is from a ctor with a lower
- * priority than 101 (i.e. from runtime / CRT / libc++_shared).
- */
-__attribute__((constructor(101))) static void
-  _qnn_context_static_init_entry() {
-  LOGD("[JBD] qnn_context.so static init ENTRY (priority 101)");
-}
-
-__attribute__((constructor(1000)))  static void _qnn_probe_p01000() { LOGD("[JBD] qnn_context probe p01000"); }
-__attribute__((constructor(5000)))  static void _qnn_probe_p05000() { LOGD("[JBD] qnn_context probe p05000"); }
-__attribute__((constructor(10000))) static void _qnn_probe_p10000() { LOGD("[JBD] qnn_context probe p10000"); }
-__attribute__((constructor(30000))) static void _qnn_probe_p30000() { LOGD("[JBD] qnn_context probe p30000"); }
-__attribute__((constructor(50000))) static void _qnn_probe_p50000() { LOGD("[JBD] qnn_context probe p50000"); }
-__attribute__((constructor(60000))) static void _qnn_probe_p60000() { LOGD("[JBD] qnn_context probe p60000"); }
-__attribute__((constructor(64000))) static void _qnn_probe_p64000() { LOGD("[JBD] qnn_context probe p64000"); }
-__attribute__((constructor(65000))) static void _qnn_probe_p65000() { LOGD("[JBD] qnn_context probe p65000"); }
-__attribute__((constructor(65500))) static void _qnn_probe_p65500() { LOGD("[JBD] qnn_context probe p65500"); }
-
-__attribute__((constructor(65535))) static void
-  _qnn_context_static_init_exit() {
-  LOGD("[JBD] qnn_context.so static init EXIT  (priority 65535)");
-}
-
 namespace nntrainer {
 
 std::mutex qnn_factory_mutex;

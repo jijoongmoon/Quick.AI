@@ -33,50 +33,10 @@
 #include <util_func.h>
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(400))) static void _qnn_probe_QNNGraph() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] QNNGraph ctor fired (priority 400)");
-}
-/* ────────────────────────────────────────────────────────────────── */
-
-/* ─── QNNGraph.cpp internal bisection probes ─────────────────────── */
-namespace {
-struct _qnn_mid_probe_QNNGraph_A {
-    _qnn_mid_probe_QNNGraph_A() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] QNNGraph.cpp mid-A fired (pre exec_seconds)");
-    }
-};
-static _qnn_mid_probe_QNNGraph_A _qnn_mid_probe_QNNGraph_A_inst;
-} // namespace
 
 std::chrono::duration<double> exec_seconds;
 
-namespace {
-struct _qnn_mid_probe_QNNGraph_B {
-    _qnn_mid_probe_QNNGraph_B() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] QNNGraph.cpp mid-B fired (post exec_seconds)");
-    }
-};
-static _qnn_mid_probe_QNNGraph_B _qnn_mid_probe_QNNGraph_B_inst;
-} // namespace
-
 namespace nntrainer {
-
-namespace {
-struct _qnn_mid_probe_QNNGraph_C {
-    _qnn_mid_probe_QNNGraph_C() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] QNNGraph.cpp mid-C fired (inside nntrainer ns, before anything else)");
-    }
-};
-static _qnn_mid_probe_QNNGraph_C _qnn_mid_probe_QNNGraph_C_inst;
-} // namespace
 
 static constexpr size_t SINGLE_INOUT_IDX = 0;
 
@@ -458,12 +418,3 @@ void QNNGraph::populateTensor(std::shared_ptr<QNNVar> qc_var,
 }
 
 } // namespace nntrainer
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_QNNGraph {
-    _qnn_end_probe_QNNGraph() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from QNNGraph.cpp");
-    }
-}; static _qnn_end_probe_QNNGraph _qnn_end_probe_QNNGraph_inst; }
-/* ────────────────────────────────────────────────────────────────── */

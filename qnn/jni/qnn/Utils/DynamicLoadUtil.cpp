@@ -13,15 +13,6 @@
 #include "PAL/DynamicLoading.hpp"
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(310))) static void _qnn_probe_DynamicLoadUtil() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] DynamicLoadUtil ctor fired (priority 310)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 using namespace qnn;
 using namespace qnn::tools;
@@ -183,12 +174,3 @@ dynamicloadutil::StatusCode dynamicloadutil::getQnnSystemFunctionPointers(
   QNN_FUNCTION_EXIT_LOG;
   return StatusCode::SUCCESS;
 }
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_DynamicLoadUtil {
-    _qnn_end_probe_DynamicLoadUtil() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from DynamicLoadUtil.cpp");
-    }
-}; static _qnn_end_probe_DynamicLoadUtil _qnn_end_probe_DynamicLoadUtil_inst; }
-/* ────────────────────────────────────────────────────────────────── */

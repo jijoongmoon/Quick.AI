@@ -1,15 +1,6 @@
 #include "qnn_properties.h"
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(220))) static void _qnn_probe_qnn_properties() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] qnn_properties ctor fired (priority 220)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 namespace nntrainer {
 
@@ -43,12 +34,3 @@ str_converter<props::quant_param_prop_tag,
     tokens[0], std::make_pair(std::stof(tokens[1]), std::stoi(tokens[2])));
 }
 } // namespace nntrainer
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_qnn_properties {
-    _qnn_end_probe_qnn_properties() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from qnn_properties.cpp");
-    }
-}; static _qnn_end_probe_qnn_properties _qnn_end_probe_qnn_properties_inst; }
-/* ────────────────────────────────────────────────────────────────── */

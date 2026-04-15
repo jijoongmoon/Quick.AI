@@ -12,15 +12,6 @@
 #include "QnnWrapperUtils.hpp"
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(340))) static void _qnn_probe_QnnWrapperUtils() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] QnnWrapperUtils ctor fired (priority 340)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 qnn_wrapper_api::ModelError_t qnn_wrapper_api::freeQnnTensor(Qnn_Tensor_t &tensor) {
   // free all pointer allocations in struct
@@ -64,12 +55,3 @@ qnn_wrapper_api::ModelError_t qnn_wrapper_api::freeGraphsInfo(GraphInfoPtr_t **g
   *graphsInfo = nullptr;
   return MODEL_NO_ERROR;
 }
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_QnnWrapperUtils {
-    _qnn_end_probe_QnnWrapperUtils() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from QnnWrapperUtils.cpp");
-    }
-}; static _qnn_end_probe_QnnWrapperUtils _qnn_end_probe_QnnWrapperUtils_inst; }
-/* ────────────────────────────────────────────────────────────────── */

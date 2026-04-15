@@ -15,15 +15,6 @@
 #include "Logger.hpp"
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(200))) static void _qnn_probe_Logger() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] Logger ctor fired (priority 200)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 using namespace qnn::log;
 
@@ -114,12 +105,3 @@ bool qnn::log::setLogLevel(QnnLog_Level_t maxLevel) {
   g_logger->setMaxLevel(maxLevel);
   return true;
 }
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_Logger {
-    _qnn_end_probe_Logger() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from Logger.cpp");
-    }
-}; static _qnn_end_probe_Logger _qnn_end_probe_Logger_inst; }
-/* ────────────────────────────────────────────────────────────────── */

@@ -25,15 +25,6 @@
 #include "QnnTypeMacros.hpp"
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(330))) static void _qnn_probe_QnnSampleAppUtils() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] QnnSampleAppUtils ctor fired (priority 330)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 using namespace qnn;
 using namespace qnn::tools;
@@ -464,12 +455,3 @@ unsigned int sample_app::parseUintArg(std::string numString) {
   numStream >> num;
   return num;
 }
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_QnnSampleAppUtils {
-    _qnn_end_probe_QnnSampleAppUtils() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from QnnSampleAppUtils.cpp");
-    }
-}; static _qnn_end_probe_QnnSampleAppUtils _qnn_end_probe_QnnSampleAppUtils_inst; }
-/* ────────────────────────────────────────────────────────────────── */

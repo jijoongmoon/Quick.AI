@@ -13,15 +13,6 @@
 #include "PAL/GetOpt.hpp"
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(700))) static void _qnn_probe_GetOpt() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] GetOpt ctor fired (priority 700)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 using namespace std;
 
@@ -163,12 +154,3 @@ int getOptLongOnly(int argc,
 }  // end of getOptLongOnly
 
 }  // namespace pal
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_GetOpt {
-    _qnn_end_probe_GetOpt() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from GetOpt.cpp");
-    }
-}; static _qnn_end_probe_GetOpt _qnn_end_probe_GetOpt_inst; }
-/* ────────────────────────────────────────────────────────────────── */

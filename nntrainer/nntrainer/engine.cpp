@@ -193,111 +193,31 @@ void Engine::setWorkingDirectory(const std::string &base) {
 int Engine::registerContext(const std::string &library_path,
                             const std::string &base_path) {
 
-  LOGD("(JBD: test) %s:%d", __FILE__, __LINE__);
-
   const std::string full_path = getFullPath(library_path, base_path);
 
-  LOGD("%s", full_path.c_str());
-
-  // Clear any stale dlerror() from a prior unrelated call so the
-  // getLastError() result below reflects only this dlopen attempt.
-  (void)DynamicLibraryLoader::getLastError();
-
-  // dlopen is extern "C" and cannot normally throw, but on Android
-  // the loaded DSO's C++ static initializers run inside dlopen — if
-  // any of those throw (e.g. std::bad_cast from a cross-DSO RTTI
-  // mismatch in the plugin's own ops) the exception propagates back
-  // through dlopen. Keep a named catch per well-known exception so
-  // the log makes the precise failure source obvious, then rethrow
-  // so the caller's NNTR_THROW_IF sees the real error instead of a
-  // bogus "load succeeded / handle == nullptr" race.
-  //
-  // RTLD_GLOBAL (instead of the historical RTLD_LOCAL) is required on
-  // Android: the plugin contains its own weak copies of every
-  // vague-linkage typeinfo it references — including the nntrainer
-  // polymorphic base classes it inherits from. Under RTLD_LOCAL those
-  // local copies win during the plugin's own relocation pass, so
-  // cross-DSO dynamic_cast<T&> ends up comparing two distinct
-  // type_info objects (one in libnntrainer.so, one private to
-  // libqnn_context.so) and throws std::bad_cast out of libc++.
-  // RTLD_GLOBAL keeps the plugin's symbol scope merged with the
-  // already-loaded libnntrainer.so symbols, so the typeinfo
-  // references collapse onto a single exported definition and the
-  // dynamic_cast path succeeds.
-  void *handle = nullptr;
-  try {
-    handle = DynamicLibraryLoader::loadLibrary(full_path.c_str(),
-                                               RTLD_LAZY | RTLD_GLOBAL);
-  } catch (const std::bad_cast &e) {
-    LOGE("[JBD] dlopen(%s) threw std::bad_cast — cross-DSO RTTI "
-         "mismatch during the plugin's static initializers: %s",
-         full_path.c_str(), e.what());
-    throw;
-  } catch (const std::exception &e) {
-    LOGE("[JBD] dlopen(%s) threw %s: %s", full_path.c_str(),
-         typeid(e).name(), e.what());
-    throw;
-  }
-
-  LOGD("(JBD: test) %s:%d", __FILE__, __LINE__);
+  void *handle = DynamicLibraryLoader::loadLibrary(full_path.c_str(),
+                                                   RTLD_LAZY | RTLD_LOCAL);
 
   const char *error_msg = DynamicLibraryLoader::getLastError();
 
-  LOGD("error msg: %s", error_msg ? error_msg : "(null)");
-
   NNTR_THROW_IF(handle == nullptr, std::invalid_argument)
-    << func_tag << "open plugin failed, path: " << full_path
-    << ", reason: " << (error_msg ? error_msg : "(null)");
-
-  LOGD("handle: %p", handle);
-
-  LOGD("%s:%d", __FILE__, __LINE__);
-
-  // Clear dlerror() again so the ml_train_context_pluggable lookup
-  // below can use error_msg == nullptr as the "symbol found" signal.
-  (void)DynamicLibraryLoader::getLastError();
+    << func_tag << "open plugin failed, reason: " << error_msg;
 
   nntrainer::ContextPluggable *pluggable =
     reinterpret_cast<nntrainer::ContextPluggable *>(
       DynamicLibraryLoader::loadSymbol(handle, "ml_train_context_pluggable"));
 
-  LOGD("%s:%d", __FILE__, __LINE__);
-
   error_msg = DynamicLibraryLoader::getLastError();
   auto close_dl = [handle] { DynamicLibraryLoader::freeLibrary(handle); };
-  NNTR_THROW_IF_CLEANUP(pluggable == nullptr,
+  NNTR_THROW_IF_CLEANUP(error_msg != nullptr || pluggable == nullptr,
                         std::invalid_argument, close_dl)
-    << func_tag << "loading symbol ml_train_context_pluggable failed, reason: "
-    << (error_msg ? error_msg : "(null)");
+    << func_tag << "loading symbol failed, reason: " << error_msg;
 
-            LOGD("%s:%d", __FILE__, __LINE__);
-
-
-  nntrainer::Context *context = nullptr;
-  try {
-    context = pluggable->createfunc();
-  } catch (const std::bad_cast &e) {
-    LOGE("[JBD] pluggable->createfunc() threw std::bad_cast — the "
-         "plugin's create function triggered a cross-DSO dynamic_cast "
-         "on a type whose typeinfo is not shared between libnntrainer "
-         "and %s. Reason: %s",
-         full_path.c_str(), e.what());
-    DynamicLibraryLoader::freeLibrary(handle);
-    throw;
-  } catch (const std::exception &e) {
-    LOGE("[JBD] pluggable->createfunc() threw %s: %s",
-         typeid(e).name(), e.what());
-    DynamicLibraryLoader::freeLibrary(handle);
-    throw;
-  }
-
-          LOGD("%s:%d", __FILE__, __LINE__);
+  auto context = pluggable->createfunc();
 
   NNTR_THROW_IF_CLEANUP(context == nullptr, std::invalid_argument, close_dl)
     << func_tag << "created pluggable context is null";
   auto type = context->getName();
-
-          LOGD("%s:%d", __FILE__, __LINE__);
 
   NNTR_THROW_IF_CLEANUP(type == "", std::invalid_argument, close_dl)
     << func_tag << "custom layer must specify type name, but it is empty";

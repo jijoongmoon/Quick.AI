@@ -12,15 +12,6 @@
 #include <util_func.h>
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(410))) static void _qnn_probe_QNNLinear() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] QNNLinear ctor fired (priority 410)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 namespace nntrainer {
 
@@ -168,12 +159,3 @@ void QNNLinear::exportTo(Exporter &exporter,
 }
 
 } // namespace nntrainer
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_QNNLinear {
-    _qnn_end_probe_QNNLinear() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from QNNLinear.cpp");
-    }
-}; static _qnn_end_probe_QNNLinear _qnn_end_probe_QNNLinear_inst; }
-/* ────────────────────────────────────────────────────────────────── */

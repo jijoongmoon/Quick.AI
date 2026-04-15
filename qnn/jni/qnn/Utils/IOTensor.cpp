@@ -23,15 +23,6 @@
 #include "QnnTypeMacros.hpp"
 
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(320))) static void _qnn_probe_IOTensor() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] IOTensor ctor fired (priority 320)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 using namespace qnn;
 using namespace qnn::tools;
@@ -936,12 +927,3 @@ iotensor::InputDataType iotensor::parseInputDataType(std::string dataTypeString)
   }
   return parsedDataType;
 }
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_IOTensor {
-    _qnn_end_probe_IOTensor() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from IOTensor.cpp");
-    }
-}; static _qnn_end_probe_IOTensor _qnn_end_probe_IOTensor_inst; }
-/* ────────────────────────────────────────────────────────────────── */

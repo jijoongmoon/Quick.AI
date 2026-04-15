@@ -30,15 +30,6 @@
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-/* ─── diagnostic probe (claude:fix-quickdotai-library-loading-lVkx9) ── */
-extern "C" {
-#include <android/log.h>
-}
-__attribute__((constructor(720))) static void _qnn_probe_Directory() {
-    __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                        "[JBD] Directory ctor fired (priority 720)");
-}
-/* ────────────────────────────────────────────────────────────────── */
 
 #ifdef __QNXNTO__
 
@@ -163,12 +154,3 @@ bool pal::Directory::makePath(const std::string &path) {
 
   return rc;
 }
-
-/* ─── diagnostic END probe (unprioritized) ───────────────────────── */
-namespace { struct _qnn_end_probe_Directory {
-    _qnn_end_probe_Directory() {
-        __android_log_print(ANDROID_LOG_DEBUG, "qnn_probe",
-                            "[JBD] END-probe fired from Directory.cpp");
-    }
-}; static _qnn_end_probe_Directory _qnn_end_probe_Directory_inst; }
-/* ────────────────────────────────────────────────────────────────── */
