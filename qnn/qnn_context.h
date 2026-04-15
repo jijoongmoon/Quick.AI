@@ -120,13 +120,47 @@ public:
   std::unique_ptr<nntrainer::Layer>
   createLayerObject(const std::string &type,
                     const std::vector<std::string> &properties) override {
-    return createObject<nntrainer::Layer>(type, properties);
+    // Any exception that escapes createObject / QNNGraph ctor /
+    // QNNGraph::setProperty here is thrown from inside libqnn_context.so.
+    // On Android with app-classloader linker namespaces the typeinfo of
+    // such non-libc++ exceptions (e.g. nntrainer::exception::not_supported)
+    // is a weak local copy, and by the time it propagates out to the
+    // caller DSO the typeid identity no longer matches — libc++abi then
+    // fails to recognise it even as a std::exception and the consumer
+    // sees an opaque "Unknown exception, typeid=<non-std::exception>".
+    //
+    // Catch while we're still in the same DSO as the throw (so typeinfo
+    // IS identical) and re-wrap as std::runtime_error, whose typeinfo is
+    // exported from libc++_shared.so and therefore always shared across
+    // DSOs in the classloader namespace. The caller then sees a normal
+    // std::exception with the original message preserved.
+    try {
+      return createObject<nntrainer::Layer>(type, properties);
+    } catch (const std::exception &e) {
+      throw std::runtime_error(
+        std::string("QNNContext::createLayerObject(") + type + ") failed: " +
+        e.what());
+    } catch (...) {
+      throw std::runtime_error(
+        std::string("QNNContext::createLayerObject(") + type +
+        ") failed with a non-std exception");
+    }
   }
 
   std::unique_ptr<nntrainer::Layer>
   createLayerObject(const int int_key,
                     const std::vector<std::string> &properties = {}) override {
-    return createObject<nntrainer::Layer>(int_key, properties);
+    try {
+      return createObject<nntrainer::Layer>(int_key, properties);
+    } catch (const std::exception &e) {
+      throw std::runtime_error(
+        std::string("QNNContext::createLayerObject(int_key=") +
+        std::to_string(int_key) + ") failed: " + e.what());
+    } catch (...) {
+      throw std::runtime_error(
+        std::string("QNNContext::createLayerObject(int_key=") +
+        std::to_string(int_key) + ") failed with a non-std exception");
+    }
   }
 
   /**
