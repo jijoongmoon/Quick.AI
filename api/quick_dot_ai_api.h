@@ -60,7 +60,7 @@ typedef enum {
   CAUSAL_LM_MODEL_QWEN3_0_6B = 0,
   CAUSAL_LM_MODEL_GAUSS2_5 = 1,
   CAUSAL_LM_MODEL_GAUSS3_6_QNN = 2,
-  CAUSAL_LM_MODEL_GAUSS3_8_QNN = 3,
+  CAUSAL_LM_MODEL_LLM_QNN_TEST = 3,
 } ModelType;
 
 typedef struct {
