@@ -48,21 +48,30 @@ namespace nntrainer {
 std::mutex qnn_factory_mutex;
 
 void QNNContext::initialize() noexcept {
-  LOGD("initialize: START");
+  // Two independent phases, in this order:
+  //
+  //   1) Register QNN layer types with the Factory. This only touches
+  //      in-process state and has no external dependencies, so it must
+  //      succeed regardless of whether the QNN runtime can be brought
+  //      up (missing htp_backend_ext_config.json, missing HTP skel,
+  //      non-QNN device, etc.).
+  //
+  //   2) Bring up the QNN runtime (dlopen libQnnHtp.so / libQnnSystem.so,
+  //      load backend extensions, create QNNRpcManager). This depends
+  //      on device-side files and configuration that the app packager
+  //      may not have shipped yet. A failure here must NOT tear down
+  //      the layer registrations above — the caller can still
+  //      construct a graph that uses qnn_graph layers, and any real
+  //      QNN call site will raise its own, more specific error.
+  //
+  // Previously these two phases were a single try-block where init()
+  // threw on a missing backend-extensions config and unwound over the
+  // pending registerFactory() calls, silently leaving the Context
+  // without any qnn_* layer types and causing a later "unknown layer
+  // type qnn_graph" failure that was hard to trace back to its real
+  // cause.
+
   try {
-    LOGD("initialize: calling init()");
-    init();
-    LOGD("initialize: init() completed");
-    ml_logi("qnn init done");
-    LOGD("initialize: creating QNNRpcManager");
-    setMemAllocator(std::make_shared<QNNRpcManager>());
-
-    std::static_pointer_cast<QNNBackendVar>(getContextData())
-        ->getVar()
-        ->RpcMem = std::static_pointer_cast<QNNRpcManager>(getMemAllocator());
-    LOGD("initialize: QNNRpcManager set");
-
-    LOGD("initialize: registering QNN layers");
     registerFactory(nntrainer::createLayer<QNNLinear>, QNNLinear::type,
                     ml::train::LayerType::LAYER_FC);
     registerFactory(nntrainer::createLayer<WeightLayer>, WeightLayer::type,
@@ -71,15 +80,31 @@ void QNNContext::initialize() noexcept {
                     ml::train::LayerType::LAYER_TENSOR);
     registerFactory(nntrainer::createLayer<QNNGraph>, QNNGraph::type, -1);
     ml_logi("qnn registerFactory done");
-    LOGD("initialize: registerFactory done");
   } catch (std::exception &e) {
-    LOGE("initialize: registering qnn layers failed!!, reason: %s", e.what());
-    ml_loge("registering qnn layers failed!!, reason: %s", e.what());
+    ml_loge("QNNContext layer registration failed: %s", e.what());
+    return;
   } catch (...) {
-    LOGE("initialize: registering qnn layer failed due to unknown reason");
-    ml_loge("registering qnn layer failed due to unknown reason");
+    ml_loge("QNNContext layer registration failed (unknown reason)");
+    return;
   }
-  LOGD("initialize: END");
+
+  try {
+    init();
+    setMemAllocator(std::make_shared<QNNRpcManager>());
+    std::static_pointer_cast<QNNBackendVar>(getContextData())
+        ->getVar()
+        ->RpcMem = std::static_pointer_cast<QNNRpcManager>(getMemAllocator());
+    ml_logi("qnn init done");
+  } catch (std::exception &e) {
+    ml_logw("QNN runtime init failed — layers stay registered, but any "
+            "QNN graph forwarding will fail until this is resolved. "
+            "Reason: %s",
+            e.what());
+  } catch (...) {
+    ml_logw("QNN runtime init failed (unknown reason) — layers stay "
+            "registered, but QNN graph forwarding will fail until this "
+            "is resolved.");
+  }
 }
 
 int QNNContext::init() {
