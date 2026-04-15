@@ -73,14 +73,7 @@ namespace nntrainer {
 class NNTRAINER_PUBLIC ContextData {
 public:
   ContextData() = default;
-
-  /**
-   * @brief   Destructor
-   *
-   * Out-of-line (defined in context.cpp) — key function idiom, see
-   * the comment on Context::~Context().
-   */
-  virtual ~ContextData();
+  virtual ~ContextData() = default;
 
   std::shared_ptr<MemAllocator> getMemAllocator() { return mem_allocator; }
 
@@ -130,17 +123,8 @@ public:
 
   /**
    * @brief   Destructor
-   *
-   * Out-of-line (defined in context.cpp) so that Context has a key
-   * function. See the companion comment on Layer::~Layer() in
-   * layer_devel.h — without a key function the compiler emits
-   * Context's typeinfo and vtable as weak COMDAT in every TU that
-   * includes this header, and Android bionic's dynamic linker does
-   * not reliably collapse those across DSOs, which makes cross-DSO
-   * dynamic_cast<Context &> throw std::bad_cast out of a plugin's
-   * dlopen.
    */
-  virtual ~Context();
+  virtual ~Context() = default;
 
   /**
    *
