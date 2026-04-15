@@ -68,16 +68,40 @@ void causallm::Quick_Dot_AI_QNN::initialize(const std::string &native_lib_dir) {
     LOGD("%s:%d", __FILE__, __LINE__);
 
 
-  LayerHandle prefill_qnn_layer =
-      createLayer("qnn_graph",
-                  {withKey("name", prefill_graph_name),
-                   withKey("path", model_path), withKey("dim", prefill_out_dim),
-                   withKey("tensor_dtype", prefill_out_data_format),
-                   withKey("tensor_type", prefill_out_tensor_format),
-                   withKey("input_layers", prefill_input_names),
-                   withKey("input_quant_param", prefill_in_quant),
-                   withKey("output_quant_param", prefill_out_quant),
-                   withKey("engine", "qnn")});
+  LayerHandle prefill_qnn_layer;
+  try {
+    LOGD("about to createLayer(qnn_graph) prefill");
+    prefill_qnn_layer =
+        createLayer("qnn_graph",
+                    {withKey("name", prefill_graph_name),
+                     withKey("path", model_path), withKey("dim", prefill_out_dim),
+                     withKey("tensor_dtype", prefill_out_data_format),
+                     withKey("tensor_type", prefill_out_tensor_format),
+                     withKey("input_layers", prefill_input_names),
+                     withKey("input_quant_param", prefill_in_quant),
+                     withKey("output_quant_param", prefill_out_quant),
+                     withKey("engine", "qnn")});
+    LOGD("prefill qnn_graph createLayer OK");
+  } catch (const std::exception &e) {
+    LOGE("prefill qnn_graph createLayer threw std::exception (%s): %s",
+         typeid(e).name(), e.what());
+    throw;
+  } catch (...) {
+    const char *tname = "<no current exception>";
+    std::exception_ptr cur = std::current_exception();
+    if (cur) {
+      try {
+        std::rethrow_exception(cur);
+      } catch (const std::exception &e2) {
+        tname = typeid(e2).name();
+      } catch (...) {
+        tname = "<non-std::exception>";
+      }
+    }
+    LOGE("prefill qnn_graph createLayer threw non-std exception, typeid=%s",
+         tname);
+    throw;
+  }
 
                      LOGD("%s:%d", __FILE__, __LINE__);
 
