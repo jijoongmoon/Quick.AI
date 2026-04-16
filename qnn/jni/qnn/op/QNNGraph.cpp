@@ -54,11 +54,13 @@ QNNGraph::QNNGraph() :
 }
 
 QNNGraph::~QNNGraph() {
-  if (m_context) {
+  if (m_context != nullptr &&
+      m_qnnFunctionPointers.qnnInterface.contextFree != nullptr) {
     if (QNN_CONTEXT_NO_ERROR !=
         m_qnnFunctionPointers.qnnInterface.contextFree(m_context, nullptr)) {
-      ml_loge("Faile to free Context");
+      ml_loge("Failed to free QNN Context");
     }
+    m_context = nullptr;
   }
 }
 

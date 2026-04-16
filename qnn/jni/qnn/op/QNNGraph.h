@@ -93,13 +93,13 @@ private:
   unsigned int n_tensor;
   std::vector<unsigned int> tensor_idx;
 
-  int in_features_;
-  int out_features_;
-  bool state_load;
-  Qnn_ContextHandle_t m_context;
-  qnn_wrapper_api::GraphInfo_t **m_graphsInfo;
-  uint32_t m_graphsCount;
-  size_t bin_size;
+  int in_features_ = 0;
+  int out_features_ = 0;
+  bool state_load = false;
+  Qnn_ContextHandle_t m_context = nullptr;
+  qnn_wrapper_api::GraphInfo_t **m_graphsInfo = nullptr;
+  uint32_t m_graphsCount = 0;
+  size_t bin_size = 0;
   std::string bin_path;
   QnnContext_Config_t **m_contextConfig = nullptr;
   bool m_isContextCreated;
@@ -116,7 +116,7 @@ private:
   std::vector<BufferTypePtr> currentTensorBuffers;
   std::vector<BufferTypePtr> currentOutputBuffers;
 
-  sample_app::QnnFunctionPointers m_qnnFunctionPointers;
+  sample_app::QnnFunctionPointers m_qnnFunctionPointers{};
 
   StatusCode initializeIOTensors(std::shared_ptr<nntrainer::QNNVar> qc_var);
   StatusCode
