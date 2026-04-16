@@ -47,6 +47,28 @@ namespace {} // namespace
  * @brief App
  */
 class Engine : public Singleton<Engine> {
+public:
+  /**
+   * @brief Single global Engine instance shared across every DSO.
+   *
+   * Hides the inherited Singleton<Engine>::Global() — that base
+   * version is a template static member function defined inline in
+   * the header, so each DSO that includes singleton.h compiles its
+   * own copy of `static Engine instance;`. Under a single Linux
+   * linker namespace those weak copies dedupe into a single object,
+   * but inside Android app classloader-scoped namespaces the dedupe
+   * is unreliable and you end up with one Engine per DSO — plugin
+   * Contexts registered through libquick_dot_ai_api.so's copy then
+   * disappear when libnntrainer.so's createLayerNode looks them up
+   * through its own copy.
+   *
+   * Declared here, defined exactly once in engine.cpp (which lives in
+   * libnntrainer.so). Every other DSO links against that single
+   * exported symbol, so all callers see the same Engine instance and
+   * the same `engines` map.
+   */
+  static Engine &Global();
+
 protected:
   static const int RegisterContextMax = 16;
   static nntrainer::Context *nntrainerRegisteredContext[RegisterContextMax];

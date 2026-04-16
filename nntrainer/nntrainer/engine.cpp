@@ -43,6 +43,19 @@ std::once_flag global_engine_init_flag;
 nntrainer::Context
   *Engine::nntrainerRegisteredContext[Engine::RegisterContextMax];
 
+/// Out-of-line definition of the singleton accessor. This is the ONLY
+/// place `static Engine instance;` exists in the program; every other
+/// DSO that calls Engine::Global() resolves the symbol against the
+/// copy exported from libnntrainer.so. See the matching declaration
+/// in engine.h for why the inherited Singleton<Engine>::Global() (an
+/// inline template member) is not safe across Android app
+/// classloader linker namespaces.
+Engine &Engine::Global() {
+  static Engine instance;
+  instance.initializeOnce();
+  return instance;
+}
+
 void Engine::add_default_object() {
   /// @note all layers should be added to the app_context to guarantee that
   /// createLayer/createOptimizer class is created
