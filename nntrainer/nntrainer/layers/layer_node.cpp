@@ -176,7 +176,21 @@ std::unique_ptr<LayerNode>
 createLayerNode(const std::string &type,
                 const std::vector<std::string> &properties) {
   auto &eg = nntrainer::Engine::Global();
-  return createLayerNode(eg.createLayerObject(type, properties), properties);
+  // Same-DSO re-wrap: exceptions leaking from a plugin context's
+  // createLayerObject (typeinfo local to the plugin DSO) become
+  // unrecognisable to catch(std::exception &) in a caller DSO under
+  // Android's app classloader linker namespaces. Catch while we are
+  // still in libnntrainer.so and re-throw as std::runtime_error whose
+  // typeinfo is shared via libc++_shared.so.
+  try {
+    return createLayerNode(eg.createLayerObject(type, properties), properties);
+  } catch (const std::exception &e) {
+    throw std::runtime_error(std::string("createLayerNode(") + type +
+                             ") failed: " + e.what());
+  } catch (...) {
+    throw std::runtime_error(std::string("createLayerNode(") + type +
+                             ") failed with a non-std exception");
+  }
 }
 
 /**
@@ -185,11 +199,17 @@ createLayerNode(const std::string &type,
 std::unique_ptr<LayerNode>
 createLayerNode(std::unique_ptr<nntrainer::Layer> &&layer,
                 const std::vector<std::string> &properties) {
-  auto lnode = std::make_unique<LayerNode>(std::move(layer));
-
-  lnode->setProperty(properties);
-
-  return lnode;
+  try {
+    auto lnode = std::make_unique<LayerNode>(std::move(layer));
+    lnode->setProperty(properties);
+    return lnode;
+  } catch (const std::exception &e) {
+    throw std::runtime_error(std::string("createLayerNode(from-layer) failed: ") +
+                             e.what());
+  } catch (...) {
+    throw std::runtime_error(
+      "createLayerNode(from-layer) failed with a non-std exception");
+  }
 }
 
 LayerNode::LayerNode(std::unique_ptr<nntrainer::Layer> &&l) :
