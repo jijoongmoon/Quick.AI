@@ -62,12 +62,18 @@ public:
 
   ~QNNContext() {
     auto qnn_data = getQnnData();
+
+    if (qnn_data->m_backendExtensions) {
+      delete qnn_data->m_backendExtensions;
+      qnn_data->m_backendExtensions = nullptr;
+    }
+
     if ((qnn_data->m_isBackendInitialized &&
          nullptr != qnn_data->m_qnnFunctionPointers.qnnInterface.backendFree) &&
         QNN_BACKEND_NO_ERROR !=
             qnn_data->m_qnnFunctionPointers.qnnInterface.backendFree(
                 qnn_data->m_backendHandle)) {
-      ml_loge("Could not terminate backed");
+      ml_loge("Could not terminate backend");
     }
     qnn_data->m_isBackendInitialized = false;
     this->release();

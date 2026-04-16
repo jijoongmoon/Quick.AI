@@ -30,7 +30,10 @@ public:
     setupParameters(cfg, generation_cfg, nntr_cfg);
   }
 
-  virtual ~Quick_Dot_AI_QNN() = default;
+  virtual ~Quick_Dot_AI_QNN() {
+    generation_model.reset();
+    prefill_model.reset();
+  }
 
   void initialize() override;
 

@@ -93,9 +93,15 @@ protected:
                    [](unsigned char c) { return std::tolower(c); });
 
     if (engines.find(name) != engines.end()) {
-      std::stringstream ss;
-      ss << "Cannot register Context with name : " << name;
-      throw std::invalid_argument(ss.str().c_str());
+      auto old_ctx = engines[name];
+      auto old_destroy = destroy_funcs.find(name);
+      if (old_destroy != destroy_funcs.end() && old_destroy->second) {
+        old_destroy->second(old_ctx);
+      }
+      engines.erase(name);
+      allocator.erase(name);
+      library_handles.erase(name);
+      destroy_funcs.erase(name);
     }
     engines.insert(std::make_pair(name, context));
 

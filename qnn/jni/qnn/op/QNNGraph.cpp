@@ -62,6 +62,11 @@ QNNGraph::~QNNGraph() {
     }
     m_context = nullptr;
   }
+
+  if (m_contextConfig) {
+    free(m_contextConfig);
+    m_contextConfig = nullptr;
+  }
 }
 
 void QNNGraph::finalize(InitLayerContext &context) {
@@ -173,15 +178,22 @@ void QNNGraph::setProperty(const std::vector<std::string> &values) {
 StatusCode QNNGraph::freeContext(RunLayerContext &context) {
   std::shared_ptr<QNNVar> qc_var = getQNNVar(context);
 
-  if (m_context) {
+  if (m_context != nullptr &&
+      m_qnnFunctionPointers.qnnInterface.contextFree != nullptr) {
     if (QNN_CONTEXT_NO_ERROR !=
         m_qnnFunctionPointers.qnnInterface.contextFree(m_context, nullptr)) {
-      ml_loge("Faile to free Context");
+      ml_loge("Failed to free QNN Context");
       return StatusCode::FAILURE;
     }
     m_isContextCreated = false;
   }
   m_context = nullptr;
+
+  if (m_contextConfig) {
+    free(m_contextConfig);
+    m_contextConfig = nullptr;
+  }
+
   return StatusCode::SUCCESS;
 }
 

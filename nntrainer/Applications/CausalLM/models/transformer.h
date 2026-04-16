@@ -79,7 +79,7 @@ public:
   /**
    * @brief Destroy the Transformer object
    */
-  virtual ~Transformer() {}
+  virtual ~Transformer() { model.reset(); }
 
   /**
    * @brief Initialize and Construct the Transformer model

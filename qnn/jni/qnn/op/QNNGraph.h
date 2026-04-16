@@ -128,7 +128,7 @@ private:
                                    QnnProfile_EventId_t profileEventId);
   bool mmapBinaryFile(std::string filePath, void **buffer, size_t bufferSize);
 
-  int counter;
+  int counter = 0;
 };
 
 } // namespace nntrainer

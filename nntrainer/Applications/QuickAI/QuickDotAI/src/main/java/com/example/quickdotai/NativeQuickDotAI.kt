@@ -247,14 +247,19 @@ class NativeQuickDotAI : QuickDotAI {
         }
         return try {
             val ec = NativeCausalLm.unloadModelHandleNative(handle)
-            loaded = false
             if (ec != 0) {
+                loaded = false
+                handle = 0L
                 BackendResult.Err(QuickAiError.fromNativeCode(ec))
             } else {
+                loaded = false
+                handle = 0L
                 BackendResult.Ok(Unit)
             }
         } catch (t: Throwable) {
             Log.w(TAG, "unloadModelHandleNative threw", t)
+            loaded = false
+            handle = 0L
             BackendResult.Err(QuickAiError.UNKNOWN, t.message)
         }
     }
