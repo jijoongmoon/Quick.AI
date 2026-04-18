@@ -52,34 +52,31 @@ object NativeCausalLm {
     fun ensureLoaded(): Boolean {
         if (loaded) return true
         return try {
-            // Pre-load the QNN plugin via System.loadLibrary so it lands in
-            // this app's classloader linker namespace BEFORE nntrainer's
-            // engine.cpp tries to dlopen(...) it.
+            // Pre-load QNN runtime and plugin libraries via
+            // System.loadLibrary so they land in this app's classloader
+            // linker namespace. Plain dlopen("libQnnHtp.so") inside C++
+            // code (qnn_context.cpp init()) has no classloader hint and
+            // fails with status=5 on Android because bionic cannot find
+            // the .so in the app's nativeLibraryDir without the
+            // namespace context that System.loadLibrary provides.
             //
-            // Background: Android 7+ puts every app's classloader in its own
-            // linker namespace (nativeloader). `System.loadLibrary` looks up
-            // the classloader's namespace and hands it to bionic, so the
-            // loaded DSO is fully visible to every other DSO already in that
-            // namespace (libnntrainer.so included). A plain dlopen() inside
-            // C++ code has no classloader hint — bionic ends up resolving
-            // weak COMDAT typeinfo without collapsing it onto the already-
-            // exported copy in libnntrainer.so, so cross-DSO dynamic_cast<T&>
-            // throws std::bad_cast out of dlopen. The same libraries work
-            // fine in a command-line (LD_LIBRARY_PATH) context because
-            // there's no namespace separation there.
-            //
-            // Loading it here first means the subsequent engine.cpp dlopen
-            // is a no-op (refcount bump on an already-loaded handle) and
-            // inherits the correct namespace bindings.
-            try {
-                System.loadLibrary("qnn_context")
-            } catch (t: UnsatisfiedLinkError) {
-                // QNN plugin is optional — if the .so is not present in the
-                // AAR's jniLibs (e.g. a CPU-only build), fall through. The
-                // native engine will only actually need it for QNN-backed
-                // models (LLM_QNN_TEST).
-                android.util.Log.w(TAG,
-                    "libqnn_context.so preload skipped: ${t.message}")
+            // Each preload is wrapped in its own try/catch so a missing
+            // library (e.g. CPU-only build without QNN SDK) does not
+            // prevent the rest of the init from proceeding.
+            for (lib in listOf(
+                "QnnHtpV75Skel",           // HTP DSP skel (device-specific)
+                "QnnHtpV73Skel",           // fallback skel for older DSP
+                "QnnHtpPrepare",           // HTP graph prepare
+                "QnnHtpNetRunExtensions",  // HTP backend extensions
+                "QnnSystem",               // QNN system interface
+                "QnnHtp",                  // QNN HTP backend
+                "qnn_context",             // nntrainer QNN plugin
+            )) {
+                try {
+                    System.loadLibrary(lib)
+                } catch (_: UnsatisfiedLinkError) {
+                    android.util.Log.w(TAG, "lib$lib.so preload skipped (not bundled)")
+                }
             }
 
             // quickai_jni dlopens libcausallm_api.so as part of its JNI_OnLoad.
