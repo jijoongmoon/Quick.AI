@@ -150,16 +150,18 @@ int QNNContext::init() {
   LOGD("init: getQnnFunctionPointers returned status=%d", (int)statusCode);
   if (dynamicloadutil::StatusCode::SUCCESS != statusCode) {
     if (dynamicloadutil::StatusCode::FAIL_LOAD_BACKEND == statusCode) {
-      LOGE("init: could not load backend");
+      LOGE("init: could not load backend (status=%d)", (int)statusCode);
       ml_loge(
           "Error: initializing QNN Function Pointers: could not load backend");
     } else if (dynamicloadutil::StatusCode::FAIL_LOAD_MODEL == statusCode) {
-      LOGE("init: could not load model");
+      LOGE("init: could not load model (status=%d)", (int)statusCode);
       ml_loge("Error initializing QNN Function Pointers: could not load");
     } else {
-      LOGE("init: unknown error initializing QNN Function Pointers");
+      LOGE("init: unknown error initializing QNN Function Pointers (status=%d)",
+           (int)statusCode);
       ml_loge("Error initializing QNN Function Pointers");
     }
+    return -1;
   }
 
   LOGD("init: calling getQnnSystemFunctionPointers");
@@ -167,8 +169,10 @@ int QNNContext::init() {
       systemLibraryPath, &qnn_data->m_qnnFunctionPointers);
   LOGD("init: getQnnSystemFunctionPointers returned status=%d", (int)statusCode);
   if (qnn::tools::dynamicloadutil::StatusCode::SUCCESS != statusCode) {
-    LOGE("init: Error initializing QNN System Function Pointers");
-    ml_loge("Error initializing QNN System Function Pointers", EXIT_FAILURE);
+    LOGE("init: Error initializing QNN System Function Pointers (status=%d)",
+         (int)statusCode);
+    ml_loge("Error initializing QNN System Function Pointers");
+    return -1;
   }
 
   if (log::isLogInitialized()) {
