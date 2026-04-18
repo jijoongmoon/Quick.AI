@@ -35,9 +35,7 @@
 #include "qwen3_moe_causallm.h"
 #include "qwen3_slim_moe_causallm.h"
 #include <factory.h>
-#ifdef ENABLE_QNN
 #include "llm_qnn_test.h"
-#endif
 #include <fstream>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -95,9 +93,7 @@ static CausalLmModel &get_default_handle() {
 
 static std::map<std::string, std::string> g_model_path_map = {
     {"QWEN3-0.6B", "qwen3-0.6b"},
-#ifdef ENABLE_QNN
     {"LLM_QNN-TEST", "llm-qnn-test"},
-#endif
 };
 
 /**
@@ -188,13 +184,11 @@ static void register_models() {
           return std::make_unique<causallm::Gemma3CausalLM>(cfg, generation_cfg,
                                                             nntr_cfg);
         });
-#ifdef ENABLE_QNN
     causallm::Factory::Instance().registerModel(
         "LLM_QNN_TEST", [](json cfg, json generation_cfg, json nntr_cfg) {
           return std::make_unique<causallm::LLM_QNN_TEST>(cfg, generation_cfg,
                                                           nntr_cfg);
         });
-#endif
     // Register built-in configurations
     quick_dot_ai::register_builtin_configs();
   });
@@ -204,10 +198,8 @@ static const char *get_model_name_from_type(ModelType type) {
   switch (type) {
   case CAUSAL_LM_MODEL_QWEN3_0_6B:
     return "QWEN3-0.6B";
-#ifdef ENABLE_QNN
   case CAUSAL_LM_MODEL_LLM_QNN_TEST:
     return "LLM-QNN-TEST";
-#endif
   default:
     return nullptr;
   }
