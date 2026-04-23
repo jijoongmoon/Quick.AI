@@ -1,21 +1,48 @@
 <div align="center">
 
-# ☄️ Quick.AI
+<h1>☄️ Quick.AI</h1>
 
-### LLMs on your device — fast, private, offline.
-
-_Efficient causal language model inference built on top of [NNTrainer](https://github.com/nntrainer/nntrainer), designed to run Qwen, GPT-OSS, Gemma, and more on phones, laptops, and embedded hardware._
+<h3><em>The fastest way to run an LLM on the device in your hand.</em></h3>
 
 <p>
-  <a href="https://github.com/EunjuYang/Quick.AI/actions/workflows/ci-linux.yml"><img src="https://github.com/EunjuYang/Quick.AI/actions/workflows/ci-linux.yml/badge.svg" alt="Linux Build"/></a>
-  <a href="https://github.com/EunjuYang/Quick.AI/actions/workflows/ci-android.yml"><img src="https://github.com/EunjuYang/Quick.AI/actions/workflows/ci-android.yml/badge.svg" alt="Android Build"/></a>
-  <a href="https://github.com/EunjuYang/Quick.AI/actions/workflows/cpp-linter.yml"><img src="https://github.com/EunjuYang/Quick.AI/actions/workflows/cpp-linter.yml/badge.svg" alt="C++ Format"/></a>
-  <a href="https://github.com/EunjuYang/Quick.AI/actions/workflows/codeql.yml"><img src="https://github.com/EunjuYang/Quick.AI/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"/></a>
-  <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"/>
-  <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white" alt="C++17"/>
-  <img src="https://img.shields.io/badge/Android-NDK%20r26d-3DDC84?logo=android&logoColor=white" alt="Android NDK"/>
-  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20Android-lightgrey" alt="Platform"/>
+Production-grade causal-LM inference on top of <a href="https://github.com/nntrainer/nntrainer">NNTrainer</a> —<br/>
+Qwen 3, GPT-OSS, Gemma 3, Llama and more, with <strong>MoE on phones</strong> via on-the-fly expert streaming.
 </p>
+
+<p>
+  <a href="https://github.com/EunjuYang/Quick.AI/actions/workflows/ci-linux.yml"><img src="https://github.com/EunjuYang/Quick.AI/actions/workflows/ci-linux.yml/badge.svg" alt="Linux"/></a>
+  <a href="https://github.com/EunjuYang/Quick.AI/actions/workflows/ci-android.yml"><img src="https://github.com/EunjuYang/Quick.AI/actions/workflows/ci-android.yml/badge.svg" alt="Android"/></a>
+  <a href="https://github.com/EunjuYang/Quick.AI/actions/workflows/cpp-linter.yml"><img src="https://github.com/EunjuYang/Quick.AI/actions/workflows/cpp-linter.yml/badge.svg" alt="Format"/></a>
+  <a href="https://github.com/EunjuYang/Quick.AI/actions/workflows/codeql.yml"><img src="https://github.com/EunjuYang/Quick.AI/actions/workflows/codeql.yml/badge.svg" alt="CodeQL"/></a>
+  <br/>
+  <img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg?style=flat-square" alt="License"/>
+  <img src="https://img.shields.io/badge/C%2B%2B-17-00599C?logo=c%2B%2B&logoColor=white&style=flat-square" alt="C++17"/>
+  <img src="https://img.shields.io/badge/Android-NDK%20r26d-3DDC84?logo=android&logoColor=white&style=flat-square" alt="Android"/>
+  <img src="https://img.shields.io/badge/platform-Linux%20·%20Android-lightgrey?style=flat-square" alt="Platform"/>
+  <img src="https://img.shields.io/badge/offline-100%25-success?style=flat-square" alt="Offline"/>
+</p>
+
+<p>
+  <a href="#-quick-start">Quick start</a> ·
+  <a href="#-see-it-in-action">Demos</a> ·
+  <a href="#-supported-models">Models</a> ·
+  <a href="#-android-build">Android</a> ·
+  <a href="#-quantization">Quantization</a> ·
+  <a href="#-architecture">Architecture</a>
+</p>
+
+</div>
+
+---
+
+<div align="center">
+
+### ⚡ Quick.AI in three numbers
+
+| 🐘 → 🪶 | 📦 | 🔒 |
+|:---:|:---:|:---:|
+| **16.5 GB → 1.3 GB** | **~13 MB** | **0 bytes** |
+| Peak RAM for Qwen3-MoE 30B with FSU | Single core inference library | Sent over the network at runtime |
 
 </div>
 
@@ -23,35 +50,72 @@ _Efficient causal language model inference built on top of [NNTrainer](https://g
 
 ## ✨ Why Quick.AI?
 
-- 🔒 **Runs locally, fully offline** — your prompts and model weights never leave the device.
-- 🧠 **MoE-ready** — execute large Mixture-of-Experts models (Qwen3-MoE 30B, GPT-OSS 20B) in as little as **1.3 GB** of RAM thanks to Flash Storage Utilization (FSU).
-- ⚡ **Fast on commodity hardware** — hand-tuned kernels for ARMv8.2-a (FP16, dotprod, i8mm) and AVX2 on x86_64.
-- 🧩 **Pluggable architecture** — each transformer building block (RMSNorm, SwiGLU, QKV, MHA core, tied embeddings, …) ships as an independently loadable layer plugin.
-- 🔌 **C + C++ APIs** — embed Quick.AI in any native app, including Android via JNI.
-- 📦 **Small footprint** — single ~13 MB `libquick_dot_ai.so` plus per-layer plugins; no Python runtime required at inference time.
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### 🧠 MoE that fits in your pocket
+Run **30B-parameter Mixture-of-Experts** models in **~1.3 GB of RAM** with Flash Storage Utilization (FSU) — experts stream in from disk only when their tokens fire.
+
+### ⚡ Tuned for the metal
+Hand-written kernels for **ARMv8.2-a** (FP16, dotprod, i8mm) and **AVX2** on x86_64. Multi-threaded with OpenMP, NEON-vectorized hot paths.
+
+### 🔒 Offline by design
+Weights, prompts, and activations stay on the device. No telemetry, no Python runtime at inference time.
+
+</td>
+<td width="50%" valign="top">
+
+### 🧩 Pluggable layers
+Each transformer building block (RMSNorm, SwiGLU, QKV, MHA core, tied embeddings…) ships as an **independently loadable `.so`** — drop in your own without recompiling the world.
+
+### 🔌 Embed anywhere
+Native **C and C++ APIs** plus a clean Android JNI build. Same source tree builds for desktop, server, and mobile.
+
+### 🪶 Zero‑install quantizer
+`quick_dot_ai_quantize` shrinks an FP32 checkpoint to **Q4_0 / Q4_K / Q6_K / FP16** in one command.
+
+</td>
+</tr>
+</table>
 
 ---
 
 ## 🎬 See it in action
 
-### 📱 MoE on a phone
+<div align="center">
 
-On-device Mixture-of-Experts inference, streamed directly from flash storage:
+#### MoE inference on a phone
 
-| GPT-OSS 20B | Qwen3-MoE 30B-A3B |
-|:---:|:---:|
-| <img src="docs/videos/GPT_OSS_20B_Demo.gif" width="360"/> | <img src="docs/videos/Qwen_30B_Demo.gif" width="360"/> |
+<table>
+<tr>
+<th align="center">GPT-OSS 20B</th>
+<th align="center">Qwen3-MoE 30B-A3B</th>
+</tr>
+<tr>
+<td align="center"><img src="docs/videos/GPT_OSS_20B_Demo.gif" width="380"/></td>
+<td align="center"><img src="docs/videos/Qwen_30B_Demo.gif" width="380"/></td>
+</tr>
+</table>
 
-### 💻 FSU: loading experts on the fly
+#### FSU: the same model, the same machine, a 12× memory cut
 
-The same Qwen3-30B-A3B model, on the same machine — once as a conventional "load everything into RAM" run, once with Quick.AI's on-the-fly expert loading:
+<table>
+<tr>
+<th align="center">🐘 Load whole model<br/><sub>Qwen3-30B-A3B</sub></th>
+<th align="center">🪶 Load experts on the fly<br/><sub>Quick.AI / FSU</sub></th>
+</tr>
+<tr>
+<td align="center"><img src="docs/videos/moe-full.gif" width="380"/></td>
+<td align="center"><img src="docs/videos/moe-on-the-fly.gif" width="380"/></td>
+</tr>
+<tr>
+<td align="center"><b>Memory: 16.5 GB</b></td>
+<td align="center"><b>Memory: 1.3 GB</b> ✨</td>
+</tr>
+</table>
 
-| Load whole model (Qwen3-30B-A3B) | Load experts on-the-fly (Quick.AI / FSU) |
-|:---:|:---:|
-| <img src="docs/videos/moe-full.gif" width="360"/> | <img src="docs/videos/moe-on-the-fly.gif" width="360"/> |
-| 🐘 **Memory: 16.5 GB** | 🪶 **Memory: 1.3 GB** |
-
-> _That's a ~12× reduction in peak memory while keeping the same user-visible behavior._ Try it yourself with the models under `models/*-slim`.
+</div>
 
 ---
 
@@ -59,144 +123,184 @@ The same Qwen3-30B-A3B model, on the same machine — once as a conventional "lo
 
 | Family | Variants | Notes |
 |---|---|---|
-| **Llama** | 1B / 3B / 7B-class | reference architecture |
-| **Qwen2** | 0.5B – 7B | causal LM |
-| **Qwen3** | 0.6B, 1.7B, 4B, 7B, 14B, 32B | [HF: Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B) |
-| **Qwen3-MoE** | 30B-A3B | [HF: Qwen3-30B-A3B](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507) · FSU-enabled |
-| **GPT-OSS** | MoE 20B, 120B | [HF: gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) · FSU-enabled |
-| **Gemma 3** | all causal variants | incl. sentence-embedding head |
+| 🦙 **Llama** | 1B / 3B / 7B-class | reference architecture |
+| 🌪️ **Qwen 2** | 0.5B – 7B | causal LM |
+| 🌊 **Qwen 3** | 0.6B · 1.7B · 4B · 7B · 14B · 32B | [HF: Qwen3-4B](https://huggingface.co/Qwen/Qwen3-4B) |
+| 🧬 **Qwen 3-MoE** | 30B-A3B | [HF: Qwen3-30B-A3B](https://huggingface.co/Qwen/Qwen3-30B-A3B-Instruct-2507) · **FSU** |
+| 🛰️ **GPT-OSS** | MoE 20B · 120B | [HF: gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) · **FSU** |
+| 💎 **Gemma 3** | all causal variants | + sentence-embedding head |
 
-Bring your own architecture by writing a small causal-LM subclass — see the [model documentation](models/README.md) for the recipe.
+> 💡 **Bring your own**: subclass the causal-LM template under `models/<your_family>/` and the [factory](factory.h) wires it in. See the [model author guide](models/README.md).
 
 ---
 
-## 🚀 Quick start (desktop / Linux)
-
-Quick.AI is built with Meson and depends on [NNTrainer](https://github.com/nntrainer/nntrainer) as a git submodule under `subprojects/nntrainer`.
+## 🚀 Quick start
 
 ```bash
-# 1. Clone with submodules
+# 1 · Clone (with submodules — NNTrainer rides along)
 git clone --recursive https://github.com/EunjuYang/Quick.AI.git
 cd Quick.AI
 
-# 2. Install system deps (Ubuntu 22.04 / 24.04)
+# 2 · System deps (Ubuntu 22.04 / 24.04)
 sudo apt-get install -y libopenblas-dev libflatbuffers-dev flatbuffers-compiler \
                         build-essential pkg-config
 pip install meson ninja
 
-# 3. Build
+# 3 · Build (~1 min on a modern laptop)
 meson setup build -Denable-fp16=true -Dthread-backend=omp -Domp-num-threads=4
 ninja -C build
 
-# 4. Run
+# 4 · Generate
 export OMP_NUM_THREADS=4 OMP_WAIT_POLICY=active OMP_PROC_BIND=true OMP_PLACES=cores
 ./build/quick_dot_ai_run ./res/qwen3/qwen3-4b/
 ```
 
-### Prepare a model
-
-Drop a model into `res/<name>/` containing:
-`config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json`, `vocab.json`, `nntr_config.json`, and the NNTrainer weight `.bin` file that `nntr_config.json` references.
+> 📁 **Model layout** — drop a model into `res/<name>/` containing
+> `config.json`, `generation_config.json`, `tokenizer.json`, `tokenizer_config.json`,
+> `vocab.json`, `nntr_config.json`, and the NNTrainer `.bin` weight file referenced from `nntr_config.json`.
 
 ---
 
 ## 📱 Android build
 
-Quick.AI ships a fully modular Android build chain (core → API → test app), wired through `ndk-build`.
+<details open>
+<summary><b>Click to expand the modular Android pipeline</b></summary>
 
-**Prerequisites:** Android NDK (r21d+), CMake, [Rust](https://rustup.rs) (for `tokenizers-cpp`), `adb`.
+<br/>
+
+**Prerequisites:** Android NDK r21d+, CMake, [Rust](https://rustup.rs) (for `tokenizers-cpp`), `adb`.
 
 ```bash
 export ANDROID_NDK=/path/to/android-ndk
-./build_android.sh       # builds libquick_dot_ai_core.so + quick_dot_ai + quick_dot_ai_quantize
-./build_api_lib.sh       # (optional) libquick_dot_ai_api.so
-./build_test_app.sh      # (optional) quick_dot_ai_test_api
-./install_android.sh     # pushes artifacts to /data/local/tmp/quick_dot_ai/ on the device
+./build_android.sh        # libquick_dot_ai_core.so · quick_dot_ai · quick_dot_ai_quantize
+./build_api_lib.sh        # (optional) libquick_dot_ai_api.so
+./build_test_app.sh       # (optional) quick_dot_ai_test_api
+./install_android.sh      # adb push to /data/local/tmp/quick_dot_ai/
 ```
 
-Run on device:
+| Script | Output(s) | Depends on |
+|---|---|---|
+| `build_android.sh` | `libquick_dot_ai_core.so`, `quick_dot_ai`, `quick_dot_ai_quantize` | NDK + Rust |
+| `build_api_lib.sh` | `libquick_dot_ai_api.so` | core lib |
+| `build_test_app.sh` | `quick_dot_ai_test_api` | core + api lib |
+| `install_android.sh` | `/data/local/tmp/quick_dot_ai/*` | adb device |
+
+Run on the phone:
 
 ```bash
 adb shell /data/local/tmp/quick_dot_ai/run_quick_dot_ai.sh <model_path>
 adb shell /data/local/tmp/quick_dot_ai/run_test_api.sh <model_name> "<prompt>"
 ```
 
-| Script | Output |
-|---|---|
-| `build_android.sh` | `libquick_dot_ai_core.so`, `quick_dot_ai`, `quick_dot_ai_quantize` |
-| `build_api_lib.sh` | `libquick_dot_ai_api.so` |
-| `build_test_app.sh` | `quick_dot_ai_test_api` |
-
 All artifacts land under `jni/libs/arm64-v8a/`.
+
+</details>
 
 ---
 
 ## 🪶 Quantization
 
-Shrink a FP32 checkpoint with `quick_dot_ai_quantize`:
-
 ```bash
-# Default: FC layers → Q4_0, embedding → FP32
+# Default: FC → Q4_0, embedding → FP32
 ./build/quick_dot_ai_quantize /path/to/qwen3-4b
 
-# Fine-grained dtypes
+# Mix dtypes per layer family
 ./build/quick_dot_ai_quantize /path/to/qwen3-4b \
     --fc_dtype Q4_0 --embd_dtype Q6_K --lmhead_dtype FP16
 
-# Write into a separate output dir
+# Write into a separate output directory
 ./build/quick_dot_ai_quantize /path/to/qwen3-4b -o /out/qwen3-4b-q40
 ```
 
-**Supported dtypes:** `FP32`, `FP16`, `Q4_0`, `Q4_K`, `Q6_K`.
+| dtype | bits | typical use |
+|---|---|---|
+| `FP32` | 32 | embedding, LM head (default) |
+| `FP16` | 16 | LM head when memory matters |
+| `Q4_0` | 4 | FC layers (default), fastest path |
+| `Q4_K` | 4 | FC layers, K-quant accuracy |
+| `Q6_K` | 6 | embedding when 4-bit hurts quality |
 
-> ⚠️ **Q4_0 is architecture-specific** — an x86-quantized Q4_0 `.bin` is not byte-compatible with ARM and vice versa. Run `quick_dot_ai_quantize` on the same ISA you plan to serve from.
+> ⚠️ **Q4_0 is ISA-specific** — an x86-quantized Q4_0 binary is not byte-compatible with ARM. Quantize on the same architecture you serve from.
 
 After quantization, point `quick_dot_ai_run` at the quantized directory (or `mv nntr_config_quantized.json nntr_config.json` in place and rerun).
 
 ---
 
-## 🏗️ Architecture at a glance
+## 🏗️ Architecture
 
-```
-┌─────────────────────── Quick.AI ──────────────────────┐
-│                                                       │
-│  quick_dot_ai_run / _quantize / _test_api (binaries)  │
-│                        │                              │
-│  libquick_dot_ai.so  ──┼──  libquick_dot_ai_api.so    │
-│                        │                              │
-│  per-layer plugins (rms_norm, swiglu, mha_core, …)    │
-│                        │                              │
-│           NNTrainer (subprojects/nntrainer)           │
-│                        │                              │
-│         OpenBLAS  ·  OpenMP  ·  Flatbuffers           │
-└───────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph Apps["👤 Your application / CLI"]
+        BIN["quick_dot_ai_run<br/>quick_dot_ai_quantize<br/>quick_dot_ai_test_api"]
+    end
+
+    subgraph QAI["☄️ Quick.AI"]
+        direction TB
+        API["libquick_dot_ai_api.so<br/><sub>stable C API</sub>"]
+        CORE["libquick_dot_ai.so<br/><sub>causal-LM engine · namespace quick_dot_ai</sub>"]
+        subgraph LAYERS["🧩 Per-layer plugins (.so)"]
+            direction LR
+            L1["rms_norm"]
+            L2["swiglu"]
+            L3["mha_core"]
+            L4["qkv"]
+            L5["lm_head"]
+            L6["tied_embed"]
+            L7["embed_pool"]
+            L8["…"]
+        end
+    end
+
+    subgraph DEPS["🧱 Foundations"]
+        NNT["NNTrainer<br/><sub>subprojects/nntrainer · meson subproject</sub>"]
+        SYS["OpenBLAS · OpenMP · Flatbuffers"]
+    end
+
+    BIN --> API
+    BIN --> CORE
+    API --> CORE
+    CORE --> LAYERS
+    CORE --> NNT
+    LAYERS --> NNT
+    NNT --> SYS
+
+    classDef app fill:#fff7e6,stroke:#fa8c16,color:#874d00
+    classDef qai fill:#e6f4ff,stroke:#1677ff,color:#003a8c
+    classDef plugin fill:#f6ffed,stroke:#52c41a,color:#135200
+    classDef dep fill:#f5f5f5,stroke:#8c8c8c,color:#262626
+    class BIN app
+    class API,CORE qai
+    class L1,L2,L3,L4,L5,L6,L7,L8 plugin
+    class NNT,SYS dep
 ```
 
-- C++ code lives under `namespace quick_dot_ai`.
-- NNTrainer is pulled in as a Meson subproject; Quick.AI disables NNTrainer's own Applications and tests to keep the dependency build lean.
-- The C API (`api/causal_lm_api.h`) is the stable surface for host integrations — it hasn't been renamed, so existing embedders keep building.
+- **Stable seam.** The C API in `api/causal_lm_api.h` is the integration surface and is intentionally **not renamed** — existing embedders keep building.
+- **Lean dependency graph.** NNTrainer is pulled in as a Meson subproject with `enable-app=false`, `enable-test=false`, and the TFLite backbone disabled — only the core engine and the C++ API ride along.
+- **Per-layer `.so`s.** Custom transformer pieces are loaded as plugins, so swapping in a new attention kernel doesn't require relinking the whole library.
 
 ---
 
 ## 🧪 Continuous integration
 
-Every PR runs:
+Every PR is gated by:
 
-- ✅ **Linux build** — Meson + Ninja on Ubuntu 22.04 & 24.04
-- ✅ **Android build** — `arm64-v8a`, NDK r26d, Rust `aarch64-linux-android`
-- ✅ **C++ format check** — clang-format 14 against `.clang-format`
-- ✅ **CodeQL** — security/quality static analysis
+| Check | What it does |
+|---|---|
+| 🐧 **Linux build** | Meson + Ninja on Ubuntu 22.04 & 24.04 |
+| 🤖 **Android build** | `arm64-v8a`, NDK r26d, Rust `aarch64-linux-android` |
+| 🎨 **C++ format** | clang-format 14 against `.clang-format` |
+| 🛡️ **CodeQL** | security & quality static analysis |
 
-CI configuration: [`.github/workflows/`](.github/workflows/).
+Workflows live under [`.github/workflows/`](.github/workflows/).
 
 ---
 
 ## 📚 Further reading
 
-- [Model implementation guide](models/README.md)
-- [C API reference](api/README.md)
-- [Benchmark tooling](benchmarks/README.md)
-- Papers & talks:
+- 📖 [Model implementation guide](models/README.md)
+- 🧩 [C API reference](api/README.md)
+- 📊 [Benchmark tooling](benchmarks/README.md)
+- 🎤 Talks & papers:
   - [Memory-Efficient LLM Inference on Edge Devices with NNTrainer](https://youtu.be/J2tUmi4bwMY?si=rJyiXkwr5iFrMhIK) — Open Source Summit 2025 Seoul
   - [A New Frontier of AI: On-Device AI Training and Personalization](https://dl.acm.org/doi/abs/10.1145/3639477.3639716) — ICSE-SEIP 2024
   - [NNTrainer: Light-Weight On-Device Training Framework](https://arxiv.org/pdf/2206.04688.pdf) — arXiv 2022
@@ -205,11 +309,11 @@ CI configuration: [`.github/workflows/`](.github/workflows/).
 
 ## 🤝 Contributing
 
-PRs and issues are very welcome. Before you open one:
+We love PRs. Before opening one:
 
-1. Run `meson setup build && ninja -C build` locally — the same command CI uses.
-2. Run `clang-format -i` on any changed C/C++ files (config in `.clang-format`).
-3. If you're adding a new model family, drop it under `models/<your_family>/` and wire it into `models/meson.build` — the factory in `factory.h` does the rest.
+1. 🛠️ `meson setup build && ninja -C build` — the same command CI runs.
+2. 🎨 `clang-format -i` on any changed C/C++ files (config in `.clang-format`).
+3. 🧬 Adding a new model family? Drop it under `models/<your_family>/`, wire it into `models/meson.build`, and register it in [`factory.h`](factory.h).
 
 ## 📄 License
 
@@ -230,3 +334,11 @@ If Quick.AI is useful for your research, please cite the NNTrainer paper it buil
   doi       = {10.1145/3639477.3639716}
 }
 ```
+
+<div align="center">
+
+---
+
+<sub>Built with ❤️ on top of <a href="https://github.com/nntrainer/nntrainer">NNTrainer</a>.</sub>
+
+</div>
