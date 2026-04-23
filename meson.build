@@ -18,6 +18,8 @@ nntrainer_proj = subproject('nntrainer',
   default_options: [
     'enable-app=false',
     'enable-test=false',
+    'enable-tflite-backbone=false',
+    'enable-tflite-interpreter=false',
     'werror=false',
   ],
 )
