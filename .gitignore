@@ -8,9 +8,10 @@ builddir/
 *.dll
 *.exe
 
-# Meson subproject cache
+# Meson subproject cache / auto-generated wrap redirects
 subprojects/packagecache/
 subprojects/.wraplock
+subprojects/*.wrap
 
 # Encoder staging
 encoder/
